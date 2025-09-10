@@ -25,12 +25,17 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
 
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	implementation("org.springframework.modulith:spring-modulith-starter-jpa")
+	
 	runtimeOnly("org.postgresql:postgresql")
 
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+//	testImplementation("com.h2database:h2")
+
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -44,4 +49,10 @@ dependencyManagement {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+    jvmArgs(
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "-javaagent:${classpath.find { it.name.contains("byte-buddy-agent") }?.absolutePath}"
+    )
 }

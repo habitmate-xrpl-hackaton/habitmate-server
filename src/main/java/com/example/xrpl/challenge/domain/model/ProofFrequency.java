@@ -1,6 +1,10 @@
 package com.example.xrpl.challenge.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
+
+import java.util.Arrays;
 
 @Getter
 public enum ProofFrequency {
@@ -16,5 +20,18 @@ public enum ProofFrequency {
 
     ProofFrequency(int times) {
         this.times = times;
+    }
+
+    @JsonCreator
+    public static ProofFrequency fromTimes(int times) {
+        return Arrays.stream(ProofFrequency.values())
+                .filter(frequency -> frequency.times == times)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid frequency: " + times));
+    }
+
+    @JsonValue
+    public int getTimes() {
+        return times;
     }
 }
