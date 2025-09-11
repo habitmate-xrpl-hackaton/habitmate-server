@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springdoc: off
+    org.hibernate.SQL: DEBUG                               # SQL 실행 쿼리 로그를 출력
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE   # 바인딩된 파라미터 값을 출력
+    org.hibernate.orm.jdbc.bind: TRACE                     # Alternative for newer Hibernate versions
+
+spring:
+  application:
+    name: xrpl
+
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        one-indexed-parameters: true
+        page-parameter: page
+        size-parameter: size

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: xrpl
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: develop
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health_check
