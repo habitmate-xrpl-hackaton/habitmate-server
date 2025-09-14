@@ -36,4 +36,7 @@ out/
 ### VS Code ###
 .vscode/
 
+
+
 gemini.md
+/src/test/resources/application.properties
