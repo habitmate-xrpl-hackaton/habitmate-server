@@ -1,5 +1,7 @@
 package com.example.xrpl.challenge.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Embeddable;
 
 import java.math.BigDecimal;
@@ -9,9 +11,12 @@ public record Fee (
         String currency,
         BigDecimal amount
 ) {
-    public Fee  {
+    @JsonCreator
+    public Fee(@JsonProperty("currency") String currency, @JsonProperty("amount") BigDecimal amount)  {
         if(amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount cannot be negative");
         }
+        this.currency = currency;
+        this.amount = amount;
     }
 }

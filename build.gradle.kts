@@ -31,10 +31,11 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.projectlombok:lombok")
-	annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
 
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	implementation("org.springframework.modulith:spring-modulith-starter-jpa")
+
 	runtimeOnly("org.postgresql:postgresql")
 
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.12")
@@ -53,4 +54,10 @@ dependencyManagement {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+    jvmArgs(
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "-javaagent:${classpath.find { it.name.contains("byte-buddy-agent") }?.absolutePath}"
+    )
 }

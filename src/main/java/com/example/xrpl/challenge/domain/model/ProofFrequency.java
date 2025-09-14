@@ -22,7 +22,6 @@ public enum ProofFrequency {
         this.times = times;
     }
 
-    // JSON -> Enum: 숫자를 Enum 상수로 변환
     @JsonCreator
     public static ProofFrequency fromTimes(int times) {
         return Arrays.stream(ProofFrequency.values())
@@ -31,7 +30,6 @@ public enum ProofFrequency {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid frequency: " + times));
     }
 
-    // Enum -> JSON: Enum 상수를 숫자로 변환
     @JsonValue
     public int getTimes() {
         return times;
