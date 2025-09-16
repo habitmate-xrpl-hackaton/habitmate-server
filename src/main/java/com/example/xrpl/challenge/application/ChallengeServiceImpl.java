@@ -7,6 +7,8 @@ import com.example.xrpl.challenge.domain.model.Challenge;
 import com.example.xrpl.challenge.domain.model.ChallengeType;
 import com.example.xrpl.challenge.infrastructure.ChallengeRepository;
 import com.example.xrpl.challenge.application.curation.LatestChallengesCurationStrategy;
+import com.example.xrpl.challenge.api.dto.ChallengeDetailDto;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,9 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -65,5 +67,13 @@ public class ChallengeServiceImpl implements ChallengeService {
     public Page<ChallengeListDto> findCuratedChallenges(ChallengeType type, Pageable pageable) {
         return latestChallengesCurationStrategy.curate(type, pageable)
                 .map(ChallengeListDto::from);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ChallengeDetailDto findChallengeDetail(Long id) {
+        return challengeRepository.findById(id)
+                .map(ChallengeDetailDto::from)
+                .orElseThrow(() -> new NoSuchElementException("Challenge not found with id: " + id));
     }
 }
