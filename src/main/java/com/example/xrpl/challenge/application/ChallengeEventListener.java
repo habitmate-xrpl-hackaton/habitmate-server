@@ -14,8 +14,6 @@ public class ChallengeEventListener {
 
     @ApplicationModuleListener
     public void handleChallengeCreatedEvent(ChallengeCreatedEvent event) {
-        Challenge challenge = event.challenge();
-        // 트랜잭션 커밋 후 리스너가 동작하므로, challenge.getId()는 항상 유효합니다.
-        log.info("Event: challenge_created, Challenge ID: {}, Created At: {}", challenge.getId(), LocalDateTime.now());
+        log.info("Event: challenge_created,  Created At: {}", LocalDateTime.now());
     }
 }

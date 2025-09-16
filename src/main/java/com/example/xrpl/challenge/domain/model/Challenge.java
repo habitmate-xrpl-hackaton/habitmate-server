@@ -2,6 +2,7 @@ package com.example.xrpl.challenge.domain.model;
 
 import com.example.xrpl.challenge.api.dto.ChallengeCreateRequest;
 import com.example.xrpl.challenge.domain.event.ChallengeCreatedEvent;
+
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -53,21 +54,21 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "currency", column = @Column(name = "entry_fee_currency")),
+            @AttributeOverride(name = "currency", column = @Column(name = "entry_fee_currency", length = 500)),
             @AttributeOverride(name = "amount", column = @Column(name = "entry_fee_amount"))
     })
     private Fee entryFee;
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "currency", column = @Column(name = "service_fee_currency")),
+            @AttributeOverride(name = "currency", column = @Column(name = "service_fee_currency", length = 500)),
             @AttributeOverride(name = "amount", column = @Column(name = "service_fee_amount"))
     })
     private Fee serviceFee; // serviceFee는 null일 수 있음
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "challenge_rules", joinColumns = @JoinColumn(name = "challenge_id"))
-    @Column(name = "rule_description")
+    @Column(name = "rule_description", length = 500)
     @OrderColumn(name = "rule_order")
     private List<String> rules = new ArrayList<>();
 
@@ -96,6 +97,10 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
         return new Challenge(request.title(),request.description(), ChallengeType.GROUP, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()),request.entryFee(),request.serviceFee(), request.rules(), request.maxParticipants());
     }
 
+    private static Challenge createBrandChallenge(ChallengeCreateRequest request) {
+        return new Challenge(request.title(),request.description(), ChallengeType.BRAND, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()),request.entryFee(),request.serviceFee(), request.rules(), request.maxParticipants());
+    }
+
     public static Challenge of(ChallengeCreateRequest request) {
         checkValid(request);
 
@@ -105,11 +110,13 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
             challenge = Challenge.createSoloChallenge(request);
         } else if (request.type() == ChallengeType.GROUP) {
             challenge = Challenge.createGroupChallenge(request);
+        } else if (request.type() == ChallengeType.BRAND) {
+            challenge = Challenge.createBrandChallenge(request);
         } else {
             throw new IllegalStateException("Unexpected value: " + request.type());
         }
 
-        challenge.registerEvent(new ChallengeCreatedEvent(challenge));
+        challenge.registerEvent(new ChallengeCreatedEvent());
 
         return challenge;
     }
