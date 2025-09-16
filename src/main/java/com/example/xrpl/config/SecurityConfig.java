@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HEALTH_CHECK_PATH).permitAll()
                         .requestMatchers(SWAGGER_WHITELIST).anonymous()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
