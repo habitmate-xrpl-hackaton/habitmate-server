@@ -87,7 +87,8 @@ class ChallengeApiIntegrationTest {
                     ProofFrequency.SEVEN_TIMES_A_WEEK,
                     new Fee("XRP", new BigDecimal("10")),
                     ProofType.PHOTO,
-                    List.of("걸음 수 측정 앱 스크린샷 첨부", "하루에 한 번만 인증 가능")
+                    List.of("걸음 수 측정 앱 스크린샷 첨부", "하루에 한 번만 인증 가능"),
+                    5
             );
 
             // when
@@ -117,7 +118,8 @@ class ChallengeApiIntegrationTest {
                     ProofFrequency.SEVEN_TIMES_A_WEEK,
                     new Fee("XRP", new BigDecimal("10")),
                     ProofType.PHOTO,
-                    List.of("걸음 수 측정 앱 스크린샷 첨부", "하루에 한 번만 인증 가능")
+                    List.of("걸음 수 측정 앱 스크린샷 첨부", "하루에 한 번만 인증 가능"),
+                    5
             );
 
             // when & then

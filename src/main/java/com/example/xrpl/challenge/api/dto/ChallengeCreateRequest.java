@@ -27,11 +27,16 @@ public record ChallengeCreateRequest(
         ProofFrequency frequency,
 
         @JsonProperty("entry_fee")
-        Fee fee,
+        Fee entryFee,
+
+        @JsonProperty("service_fee")
+        Fee serviceFee,
 
         @JsonProperty("proof_type")
         ProofType proofType,
 
-        List<String> rules
+        List<String> rules,
+
+        int maxParticipants
 ) {
 }

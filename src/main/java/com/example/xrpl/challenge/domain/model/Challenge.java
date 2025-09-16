@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -52,7 +51,18 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
     private VerificationRule verificationRule;
 
     @Embedded
-    private Fee fee;
+    @AttributeOverrides({
+            @AttributeOverride(name = "currency", column = @Column(name = "entry_fee_currency")),
+            @AttributeOverride(name = "amount", column = @Column(name = "entry_fee_amount"))
+    })
+    private Fee entryFee;
+
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "currency", column = @Column(name = "service_fee_currency")),
+            @AttributeOverride(name = "amount", column = @Column(name = "service_fee_amount"))
+    })
+    private Fee serviceFee; // serviceFee는 null일 수 있음
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "challenge_rules", joinColumns = @JoinColumn(name = "challenge_id"))
@@ -60,7 +70,9 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
     @OrderColumn(name = "rule_order")
     private List<String> rules = new ArrayList<>();
 
-    private Challenge(String title, String description, ChallengeType type, Category category, Difficulty difficulty, Period period, VerificationRule verificationRule, Fee fee, List<String> rules) {
+    private int maxParticipants;
+
+    private Challenge(String title, String description, ChallengeType type, Category category, Difficulty difficulty, Period period, VerificationRule verificationRule, Fee entryfee, Fee serviceFee, List<String> rules, int maxParticipants) {
         this.status = ChallengeStatus.RECRUITING;
         this.title = title;
         this.description = description;
@@ -69,11 +81,39 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
         this.difficulty = difficulty;
         this.period = period;
         this.verificationRule = verificationRule;
-        this.fee = fee;
+        this.entryFee = entryfee;
+        this.serviceFee = serviceFee;
         this.rules = rules;
+        this.maxParticipants = maxParticipants;
+    }
+
+    private static Challenge createSoloChallenge(ChallengeCreateRequest request) {
+        return new Challenge(request.title(),request.description(), ChallengeType.SOLO, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()), request.entryFee(), null, request.rules(), 1);
+    }
+
+    private static Challenge createGroupChallenge(ChallengeCreateRequest request) {
+        return new Challenge(request.title(),request.description(), ChallengeType.GROUP, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()),request.entryFee(),request.serviceFee(), request.rules(), request.maxParticipants());
     }
 
     public static Challenge of(ChallengeCreateRequest request) {
+        checkValid(request);
+
+        Challenge challenge;
+
+        if (request.type() == ChallengeType.SOLO) {
+            challenge = Challenge.createSoloChallenge(request);
+        } else if (request.type() == ChallengeType.GROUP) {
+            challenge = Challenge.createGroupChallenge(request);
+        } else {
+            throw new IllegalStateException("Unexpected value: " + request.type());
+        }
+
+        challenge.registerEvent(new ChallengeCreatedEvent(challenge));
+
+        return challenge;
+    }
+
+    private static void checkValid(ChallengeCreateRequest request) {
         if (request.type() == null) {
             throw new IllegalArgumentException("ChallengeType cannot be null");
         }
@@ -98,7 +138,7 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
         if (request.frequency() == null) {
             throw new IllegalArgumentException("Proof frequency cannot be null");
         }
-        if (request.fee() == null) {
+        if (request.entryFee() == null) {
             throw new IllegalArgumentException("Fee cannot be null");
         }
         if (request.proofType() == null) {
@@ -107,21 +147,5 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
         if (request.rules() == null || request.rules().isEmpty()) {
             throw new IllegalArgumentException("Rules cannot be null or empty");
         }
-
-        Challenge challenge = new Challenge(
-                request.title(),
-                request.description(),
-                request.type(),
-                request.category(),
-                request.difficulty(),
-                new Period(request.startDate(), request.endDate()),
-                new VerificationRule(request.proofType(), request.frequency()),
-                request.fee(),
-                new ArrayList<>(request.rules())
-        );
-
-        challenge.registerEvent(new ChallengeCreatedEvent(challenge));
-
-        return challenge;
     }
 }
