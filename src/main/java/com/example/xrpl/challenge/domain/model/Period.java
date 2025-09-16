@@ -3,7 +3,6 @@ package com.example.xrpl.challenge.domain.model;
 import jakarta.persistence.Embeddable;
 import java.time.LocalDate;
 
-
 @Embeddable
 public record Period(
         LocalDate startDate,
