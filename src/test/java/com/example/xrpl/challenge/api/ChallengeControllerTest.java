@@ -14,14 +14,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.example.xrpl.challenge.infrastructure.ChallengeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import com.example.xrpl.challenge.domain.model.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -32,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
+@WithMockUser
 class ChallengeControllerTest {
 
     @Autowired
@@ -59,8 +60,8 @@ class ChallengeControllerTest {
                 startDate,
                 endDate,
                 ProofFrequency.SEVEN_TIMES_A_WEEK,
-                new Fee("XRP", new BigDecimal("10000")),
-                new Fee("XRP", new BigDecimal("100")),
+                new Fee("XRP", new BigDecimal("10000.5431")),
+                new Fee("XRP", new BigDecimal("100.125")),
                 ProofType.PHOTO,
                 List.of("rule1", "rule2"),
                 100
@@ -82,8 +83,8 @@ class ChallengeControllerTest {
                 LocalDate.now().plusDays(1),
                 LocalDate.now().plusDays(10),
                 ProofFrequency.SEVEN_TIMES_A_WEEK,
-                new Fee("XRP", new BigDecimal("10000")),
-                new Fee("XRP", new BigDecimal("100")),
+                new Fee("XRP", new BigDecimal("10000.5431")),
+                new Fee("XRP", new BigDecimal("100.125")),
                 ProofType.PHOTO,
                 List.of("5시 정각에 일어나서 본인의 얼굴이 나오도록 사진을 찍어야 합니다."),
                 100
@@ -170,5 +171,33 @@ class ChallengeControllerTest {
                 )
                 .andDo(print())
                 .andExpect(status().isBadRequest());
+    }
+
+    @DisplayName("챌린지 상세 정보를 조회한다.")
+    @Test
+    @WithMockUser
+    void findChallengeDetail() throws Exception {
+        // given
+        LocalDate today = LocalDate.now();
+        Challenge challenge = createAndSaveChallenge("상세조회-챌린지", ChallengeType.SOLO, today.plusDays(1), today.plusDays(21));
+
+        // when & then: 정상 조회
+        mockMvc.perform(get("/api/v1/challenges/{id}", challenge.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(challenge.getId()))
+                .andExpect(jsonPath("$.title").value("상세조회-챌린지"))
+                .andExpect(jsonPath("$.description").value("description for 상세조회-챌린지"))
+                .andExpect(jsonPath("$.tag[0]").value(challenge.getDifficulty().name()))
+                .andExpect(jsonPath("$.tag[1]").value(challenge.getCategory().name()))
+                .andExpect(jsonPath("$.start_date").value(challenge.getPeriod().startDate().toString()))
+                .andExpect(jsonPath("$.duration_days").value(ChronoUnit.DAYS.between(challenge.getPeriod().startDate(), challenge.getPeriod().endDate())))
+                .andExpect(jsonPath("$.participants_count").value(0))
+                .andExpect(jsonPath("$.participation_fee.amount").value(challenge.getEntryFee().amount()))
+                .andExpect(jsonPath("$.participation_fee.currency").value(challenge.getEntryFee().currency()));
+
+        // when & then: 존재하지 않는 챌린지 조회
+        mockMvc.perform(get("/api/v1/challenges/{id}", 999L))
+                .andDo(print())
+                .andExpect(status().isNotFound());
     }
 }

@@ -12,6 +12,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.xrpl.challenge.api.dto.ChallengeDetailDto;
+
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -25,13 +27,19 @@ public class ChallengeController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/pubic-challenges")
+    @GetMapping("/public-challenges")
     public ResponseEntity<Page<ChallengeListDto>> findPublicChallenges(
             @RequestParam(required = false) ChallengeType type,
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "period.startDate") Pageable pageable
     ) {
         Page<ChallengeListDto> response = challengeService.findChallenges(type, keyword, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/challenges/{id}")
+    public ResponseEntity<ChallengeDetailDto> findChallengeDetail(@PathVariable Long id) {
+        ChallengeDetailDto response = challengeService.findChallengeDetail(id);
         return ResponseEntity.ok(response);
     }
 }
