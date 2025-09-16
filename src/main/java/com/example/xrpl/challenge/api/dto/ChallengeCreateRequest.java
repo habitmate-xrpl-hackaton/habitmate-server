@@ -37,6 +37,7 @@ public record ChallengeCreateRequest(
 
         List<String> rules,
 
+        @JsonProperty("max_participants")
         int maxParticipants
 ) {
 }
