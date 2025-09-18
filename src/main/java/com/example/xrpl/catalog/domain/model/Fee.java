@@ -13,7 +13,7 @@ public record Fee (
 ) {
     @JsonCreator
     public Fee(@JsonProperty("currency") String currency, @JsonProperty("amount") BigDecimal amount)  {
-        if(amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if(amount.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Amount cannot be negative");
         }
         this.currency = currency;
