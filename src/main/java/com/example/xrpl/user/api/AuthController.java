@@ -1,8 +1,5 @@
 package com.example.xrpl.user.api;
 
-import com.example.xrpl.user.api.dto.TokenRefreshRequest;
-import com.example.xrpl.user.api.dto.TokenRefreshResponse;
-import com.example.xrpl.user.application.auth.TokenRefreshService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
