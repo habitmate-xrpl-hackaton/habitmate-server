@@ -1,6 +1,7 @@
 package com.example.xrpl.user.api;
 
 import com.example.xrpl.user.domain.Role;
+import io.jsonwebtoken.Claims;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -38,5 +39,13 @@ public class CustomOAuth2User extends DefaultOAuth2User {
         super(List.of(new SimpleGrantedAuthority(role)), Map.of("email", email), "email");
         this.userId = userId;
         this.role = Role.valueOf(role.replace("ROLE_", ""));
+    }
+
+    public static CustomOAuth2User fromClaims(Claims claims) {
+        Long userId = claims.get("userId", Long.class);
+        String role = claims.get("role", String.class);
+        String providerKey = claims.getSubject();
+
+        return new CustomOAuth2User(userId, providerKey, "ROLE_" + role);
     }
 }

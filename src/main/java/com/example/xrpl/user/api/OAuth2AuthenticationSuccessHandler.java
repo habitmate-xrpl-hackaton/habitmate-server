@@ -24,11 +24,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         CustomOAuth2User customOAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 
         String providerKey = customOAuth2User.getName();
+        Long userId = customOAuth2User.getUserId();
 
-        String accessToken = jwtTokenProvider.createAccessToken(providerKey, customOAuth2User.getRole());
+        String accessToken = jwtTokenProvider.createAccessToken(providerKey, userId, customOAuth2User.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(providerKey);
 
-        log.info("OAuth2 Login successful for user: {}, Issued Access Token: {}", customOAuth2User.getName(), accessToken);
+        log.info("OAuth2 Login successful for user: {}, Issued Access Token", customOAuth2User.getName());
 
         String targetUrl = UriComponentsBuilder.fromUriString("https://n.news.naver.com/article/092/0002390755?cds=news_media_pc")
                 .queryParam("accessToken", accessToken)

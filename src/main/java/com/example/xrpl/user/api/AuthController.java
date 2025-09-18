@@ -25,6 +25,11 @@ public class AuthController {
                      3. 백엔드는 인증 정보를 바탕으로 서비스의 Access Token과 Refresh Token을 발급합니다.
                      4. 최종적으로 사용자는 발급된 토큰을 쿼리 파라미터로 포함한 특정 URL로 리디렉션됩니다.
                      
+        
+                     **인증 토큰 사용법:**
+        
+                     Google 로그인 성공 후 발급받은 Access Token은 만료되기 전까지 모든 인증이 필요한 API 요청에 사용해야 합니다.
+                     HTTP 요청 헤더의 `Authorization` 필드에 `Bearer {ACCESS_TOKEN}` 형식으로 토큰을 포함하여 전송하세요.
                      """
     )
     @GetMapping("/google")
