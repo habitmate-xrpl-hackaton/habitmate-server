@@ -190,7 +190,7 @@ class ChallengeControllerTest {
                 .andExpect(jsonPath("$.tag[1]").value(challenge.getCategory().name()))
                 .andExpect(jsonPath("$.start_date").value(challenge.getPeriod().startDate().toString()))
                 .andExpect(jsonPath("$.duration_days").value(ChronoUnit.DAYS.between(challenge.getPeriod().startDate(), challenge.getPeriod().endDate())))
-                .andExpect(jsonPath("$.participants_count").value(0))
+                .andExpect(jsonPath("$.participants_count").value(1))
                 .andExpect(jsonPath("$.participation_fee.amount").value(challenge.getEntryFee().amount()))
                 .andExpect(jsonPath("$.participation_fee.currency").value(challenge.getEntryFee().currency()));
 
