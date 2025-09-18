@@ -1,6 +1,7 @@
 package com.example.xrpl.user.api;
 
 import com.example.xrpl.user.domain.Role;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
@@ -32,15 +33,15 @@ public class JwtTokenProvider {
         key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(String providerKey, Role role) {
-        return createToken(providerKey, role, accessTokenExpireTime);
+    public String createAccessToken(String providerKey, Long userId, Role role) {
+        return createToken(providerKey, userId, role, accessTokenExpireTime);
     }
 
     public String createRefreshToken(String providerKey) {
-        return createToken(providerKey, null, refreshTokenExpireTime);
+        return createToken(providerKey, null, null, refreshTokenExpireTime);
     }
 
-    private String createToken(String providerKey, Role role, long expireTime) {
+    private String createToken(String providerKey, Long userId, Role role, long expireTime) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expireTime);
 
@@ -53,6 +54,10 @@ public class JwtTokenProvider {
 
         if (role != null) {
             builder.claim("role", role.name());
+        }
+
+        if (userId != null) {
+            builder.claim("userId", userId);
         }
 
         return builder.compact();
@@ -75,5 +80,12 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload().getSubject();
+    }
+
+    public Claims getClaimsFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(key).build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

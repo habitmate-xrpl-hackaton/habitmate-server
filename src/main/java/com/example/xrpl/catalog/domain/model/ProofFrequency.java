@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 @Getter

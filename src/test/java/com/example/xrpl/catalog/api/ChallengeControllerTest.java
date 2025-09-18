@@ -1,11 +1,5 @@
 package com.example.xrpl.catalog.api;
 
-import com.example.xrpl.catalog.domain.model.Category;
-import com.example.xrpl.catalog.domain.model.ChallengeType;
-import com.example.xrpl.catalog.domain.model.Difficulty;
-import com.example.xrpl.catalog.domain.model.Fee;
-import com.example.xrpl.catalog.domain.model.ProofFrequency;
-import com.example.xrpl.catalog.domain.model.ProofType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
