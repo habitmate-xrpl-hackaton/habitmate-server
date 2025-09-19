@@ -1,11 +1,8 @@
 package com.example.xrpl.catalog.api;
 
 import com.example.xrpl.catalog.domain.model.Challenge;
-import com.example.xrpl.catalog.domain.model.ChallengeType;
-import com.example.xrpl.catalog.domain.model.Fee;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -19,28 +16,23 @@ public record ChallengeDetailDto(
         List<String> tag,
         @JsonProperty("start_date")
         LocalDate startDate,
+        @JsonProperty("end_date")
+        LocalDate endDate,
         @JsonProperty("duration_days")
         long durationDays,
         @JsonProperty("participants_count")
         int participantsCount,
-        @JsonProperty("participation_fee")
-        Fee participationFee
+        @JsonProperty("entry_fee")
+        FeeDto entryFee,
+        @JsonProperty("service_fee")
+        FeeDto serviceFee,
+        @JsonProperty("challenge_rules")
+        List<String> rules
 ) {
     public static ChallengeDetailDto from(Challenge challenge) {
         List<String> tags = new ArrayList<>();
         Optional.ofNullable(challenge.getDifficulty()).ifPresent(d -> tags.add(d.name()));
         Optional.ofNullable(challenge.getCategory()).ifPresent(c -> tags.add(c.name()));
-
-        Fee calculatedParticipationFee;
-        if (challenge.getType() == ChallengeType.SOLO) {
-            calculatedParticipationFee = challenge.getEntryFee();
-        } else {
-            BigDecimal totalAmount = challenge.getEntryFee().amount()
-                    .add(Optional.ofNullable(challenge.getServiceFee())
-                            .map(Fee::amount)
-                            .orElse(BigDecimal.ZERO));
-            calculatedParticipationFee = new Fee(challenge.getEntryFee().currency(), totalAmount);
-        }
 
         return new ChallengeDetailDto(
                 challenge.getId(),
@@ -48,9 +40,12 @@ public record ChallengeDetailDto(
                 challenge.getDescription(),
                 tags,
                 challenge.getPeriod().startDate(),
+                challenge.getPeriod().endDate(),
                 ChronoUnit.DAYS.between(challenge.getPeriod().startDate(), challenge.getPeriod().endDate()),
                 challenge.getCurrentParticipantsCount(),
-                calculatedParticipationFee
+                FeeDto.fromEntryFee(challenge),
+                FeeDto.fromServiceFee(challenge),
+                challenge.getRules()
         );
     }
 }

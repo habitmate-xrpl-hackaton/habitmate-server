@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class NewMemberParticipationServiceImpl implements  NewMemberParticipationService {
 
     private final ChallengeParticipantRepository participantRepository;
-    private final ChallengeCommandService challengeCommandService;
 
     /**
      * 챌린지 참가 요청을 처리합니다.
@@ -26,8 +25,6 @@ public class NewMemberParticipationServiceImpl implements  NewMemberParticipatio
     @Transactional
     @Override
     public void participateInChallenge(Long challengeId, Long userId) {
-        challengeCommandService.participateInChallenge(challengeId);
-
         ChallengeParticipant participant = ChallengeParticipant.of(challengeId, userId);
         participantRepository.save(participant);
     }

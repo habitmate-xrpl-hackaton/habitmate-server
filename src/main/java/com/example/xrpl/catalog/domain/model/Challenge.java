@@ -85,7 +85,7 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
     }
 
     private static Challenge createSoloChallenge(ChallengeCreateRequest request) {
-        return new Challenge(request.title(),request.description(), ChallengeType.SOLO, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()), request.entryFee(), new Fee("XRP", new BigDecimal(0)), request.rules(), 1, 1);
+        return new Challenge(request.title(),request.description(), ChallengeType.SOLO, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()), request.entryFee(), new Fee("XRP", new BigDecimal("0.0")), request.rules(), 1, 1);
     }
 
     private static Challenge createGroupChallenge(ChallengeCreateRequest request) {

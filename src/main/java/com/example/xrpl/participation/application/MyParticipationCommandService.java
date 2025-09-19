@@ -1,7 +1,8 @@
 package com.example.xrpl.participation.application;
 
-import org.springframework.web.multipart.MultipartFile;
+import com.example.xrpl.participation.api.ProofCreateRequest;
 
 public interface MyParticipationCommandService {
-    void addProof(long challengeId, long userId, MultipartFile imageFile);
+    void addProof(long challengeId, long userId, ProofCreateRequest request);
+    void verifyProof(Long participantId, Long proofId, boolean isSuccess);
 }

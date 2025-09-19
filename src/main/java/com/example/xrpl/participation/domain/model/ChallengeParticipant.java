@@ -1,6 +1,7 @@
 package com.example.xrpl.participation.domain.model;
 
 import com.example.xrpl.participation.api.ProofAddedEvent;
+import com.example.xrpl.participation.api.ProofStatusUpdatedEvent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -9,8 +10,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "challenge_participants")
@@ -38,7 +38,8 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
     }
 
     public static ChallengeParticipant of(long challengeId, Long userId) {
-        return new ChallengeParticipant(challengeId, userId);
+        ChallengeParticipant participant = new ChallengeParticipant(challengeId, userId);
+        return participant;
     }
 
     /**
@@ -46,10 +47,22 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
      * 이 메서드는 애그리게이트의 상태를 변경하는 유일한 진입점 역할을 합니다.
      * 내부적으로 Proof를 생성하고, 양방향 연관관계를 설정하며, 도메인 이벤트를 발행합니다.
      * @param imageUrl 인증 이미지 URL
+     * @param description 인증 설명
+     * @param hashtags 해시태그 엔티티 Set
      */
-    public void addProof(String imageUrl) {
-        Proof proof = Proof.of(this, LocalDateTime.now(), true, imageUrl);
+    public void addProof(String imageUrl, String description, Set<Hashtag> hashtags) {
+        Proof proof = Proof.of(this, LocalDateTime.now(), false, imageUrl, description, hashtags);
         this.proofs.add(proof);
-        registerEvent(new ProofAddedEvent(this.id));
+        registerEvent(new ProofAddedEvent(this.id, this.id, proof.getId(), imageUrl));
+    }
+
+    public void verifyProof(Long proofId, boolean isSuccess) {
+        Proof proofToVerify = this.proofs.stream()
+                .filter(p -> p.getId().equals(proofId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Proof not found with id: " + proofId));
+
+        proofToVerify.verify(isSuccess);
+        registerEvent(new ProofStatusUpdatedEvent(proofId, isSuccess));
     }
 }

@@ -4,4 +4,5 @@ import java.util.List;
 
 public interface ChallengeQueryService {
     List<ChallengeCatalogInfoDto> findChallengesByIds(List<Long> challengeIds);
+    ChallengeDetailDto findChallengeById(Long challengeId);
 }
