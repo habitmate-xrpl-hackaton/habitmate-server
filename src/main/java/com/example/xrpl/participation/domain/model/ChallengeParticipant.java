@@ -1,6 +1,6 @@
 package com.example.xrpl.participation.domain.model;
 
-import com.example.xrpl.participation.domain.model.event.ProofAddedEvent;
+import com.example.xrpl.participation.api.ProofAddedEvent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,12 +43,13 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
 
     /**
      * 챌린지 참가자의 인증(Proof)을 추가합니다.
-     * 양방향 연관관계를 설정하고, 인증 추가 이벤트를 발행합니다.
-     * @param proof 추가할 인증 정보
+     * 이 메서드는 애그리게이트의 상태를 변경하는 유일한 진입점 역할을 합니다.
+     * 내부적으로 Proof를 생성하고, 양방향 연관관계를 설정하며, 도메인 이벤트를 발행합니다.
+     * @param imageUrl 인증 이미지 URL
      */
-    public void addProof(Proof proof) {
+    public void addProof(String imageUrl) {
+        Proof proof = Proof.of(this, LocalDateTime.now(), true, imageUrl);
         this.proofs.add(proof);
-        proof.setParticipant(this);
         registerEvent(new ProofAddedEvent(this.id));
     }
 }

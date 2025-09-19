@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ParticipationQueryServiceImpl implements ParticipationQueryService {
+public class MyParticipationQueryServiceImpl implements MyParticipationQueryService {
 
     private final ChallengeParticipantRepository challengeParticipantRepository;
     private final ChallengeQueryService challengeQueryService;
