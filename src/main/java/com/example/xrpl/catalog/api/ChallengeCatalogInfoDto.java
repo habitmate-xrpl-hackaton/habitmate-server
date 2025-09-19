@@ -11,6 +11,7 @@ public record ChallengeCatalogInfoDto(
         Long id,
         String title,
         FeeDto entryFee,
+        FeeDto serviceFee,
         LocalDate startDate,
         LocalDate endDate,
         int frequency
@@ -19,7 +20,8 @@ public record ChallengeCatalogInfoDto(
         return new ChallengeCatalogInfoDto(
                 challenge.getId(),
                 challenge.getTitle(),
-                new FeeDto(challenge.getEntryFee().currency(), challenge.getEntryFee().amount().add(challenge.getServiceFee().amount())),
+                FeeDto.fromEntryFee(challenge),
+                FeeDto.fromServiceFee(challenge),
                 challenge.getPeriod().startDate(),
                 challenge.getPeriod().endDate(),
                 challenge.getVerificationRule().frequency().getTimes()

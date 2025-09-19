@@ -19,14 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class NewMemberParticipationController {
 
-    private final NewMemberParticipationService participationService;
+    private final NewMemberParticipationService newMemberParticipationService;
 
     @Operation(summary = "챌린지 참가", description = "특정 챌린지에 참가합니다. 성공 시 참가 정보가 생성됩니다.")
-    @PostMapping("/{challengeId}/participate")
+    @PostMapping("/{challengeId}/participations")
     public ResponseEntity<Void> participateInChallenge(
             @Parameter(description = "참가할 챌린지 ID") @PathVariable Long challengeId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomOAuth2User user) {
-        participationService.participateInChallenge(challengeId, user.getUserId());
+        newMemberParticipationService.participateInChallenge(challengeId, user.getUserId());
         return ResponseEntity.ok().build();
     }
 }

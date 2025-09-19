@@ -185,8 +185,10 @@ class ChallengeControllerTest {
                 .andExpect(jsonPath("$.start_date").value(challenge.getPeriod().startDate().toString()))
                 .andExpect(jsonPath("$.duration_days").value(ChronoUnit.DAYS.between(challenge.getPeriod().startDate(), challenge.getPeriod().endDate())))
                 .andExpect(jsonPath("$.participants_count").value(1))
-                .andExpect(jsonPath("$.participation_fee.amount").value(challenge.getEntryFee().amount()))
-                .andExpect(jsonPath("$.participation_fee.currency").value(challenge.getEntryFee().currency()));
+                .andExpect(jsonPath("$.entry_fee.amount").value(challenge.getEntryFee().amount()))
+                .andExpect(jsonPath("$.entry_fee.currency").value(challenge.getEntryFee().currency()))
+                .andExpect(jsonPath("$.service_fee.amount").value(challenge.getServiceFee().amount()))
+                .andExpect(jsonPath("$.service_fee.currency").value(challenge.getServiceFee().currency()));
 
         // when & then: 존재하지 않는 챌린지 조회
         mockMvc.perform(get("/api/v1/challenges/{id}", 999L))

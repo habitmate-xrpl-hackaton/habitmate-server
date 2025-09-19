@@ -53,6 +53,7 @@ public class MyParticipationQueryServiceImpl implements MyParticipationQueryServ
                             totalParticipatingCount,
                             totalProofCount,
                             challengeInfo.entryFee(),
+                            challengeInfo.serviceFee(),
                             challengeInfo.startDate(),
                             challengeInfo.endDate()
                     );

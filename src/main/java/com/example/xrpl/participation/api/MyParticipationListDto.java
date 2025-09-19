@@ -10,6 +10,7 @@ public record MyParticipationListDto(
         long totalParticipatingCount,
         long totalProofCount,
         FeeDto entryFee,
+        FeeDto serviceFee,
         LocalDate startDate,
         LocalDate endDate
 ) {
