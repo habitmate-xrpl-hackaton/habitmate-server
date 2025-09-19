@@ -151,4 +151,11 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
             throw new IllegalArgumentException("Rules cannot be null or empty");
         }
     }
+
+    public void participate() {
+        if (this.status != ChallengeStatus.RECRUITING || this.currentParticipantsCount >= this.maxParticipants) {
+            throw new IllegalStateException("Challenge is not recruiting or is already full.");
+        }
+        this.currentParticipantsCount++;
+    }
 }
