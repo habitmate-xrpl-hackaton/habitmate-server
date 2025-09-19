@@ -36,15 +36,7 @@ public class Proof {
         this.proofImageUrl = proofImageUrl;
     }
 
-    public static Proof of(LocalDateTime proofAt, boolean success, String proofImageUrl) {
-        return new Proof(null, proofAt, success, proofImageUrl);
-    }
-
-    /**
-     * 연관관계 편의 메서드. ChallengeParticipant 애그리게이트 루트에서만 호출되어야 합니다.
-     * @param participant 이 Proof가 속하게 될 부모 엔티티
-     */
-    void setParticipant(ChallengeParticipant participant) {
-        this.participant = participant;
+    static Proof of(ChallengeParticipant participant, LocalDateTime proofAt, boolean success, String proofImageUrl) {
+        return new Proof(participant, proofAt, success, proofImageUrl);
     }
 }
