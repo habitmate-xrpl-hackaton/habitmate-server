@@ -1,11 +1,7 @@
 package com.example.xrpl.xrpl.application;
 
 import com.example.xrpl.xrpl.config.XRPLConfig;
-import com.example.xrpl.xrpl.config.XUMMConfig;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 import jakarta.xml.bind.DatatypeConverter;
@@ -13,14 +9,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.client.XrplClient;
 import org.xrpl.xrpl4j.client.faucet.FaucetClient;
 import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
-import org.xrpl.xrpl4j.codec.addresses.AddressBase58;
-import org.xrpl.xrpl4j.codec.addresses.Version;
 import org.xrpl.xrpl4j.crypto.keys.KeyPair;
 import org.xrpl.xrpl4j.crypto.keys.Seed;
 import org.xrpl.xrpl4j.crypto.signing.SingleSignedTransaction;
@@ -34,7 +27,6 @@ import org.xrpl.xrpl4j.model.client.fees.FeeUtils;
 import org.xrpl.xrpl4j.model.client.ledger.LedgerRequestParams;
 import org.xrpl.xrpl4j.model.client.ledger.LedgerResult;
 import org.xrpl.xrpl4j.model.client.transactions.SubmitResult;
-import org.xrpl.xrpl4j.model.flags.NfTokenCreateOfferFlags;
 import org.xrpl.xrpl4j.model.transactions.*;
 
 import java.math.BigDecimal;
@@ -51,14 +43,6 @@ import java.util.Map;
 public class XRPLServiceImpl implements XRPLService {
 
     private final XRPLConfig xrplConfig;
-    private final XUMMConfig xummConfig;
-    private final WebClient xummWebClient;
-    private final WebClient xrplRpcWebClient;
-    private final ObjectMapper objectMapper;
-
-    private static final long RIPPLE_OFFSET = 946684800; // Ripple 시간 오프셋 (UNIX -> Ripple 변환에 사용)
-    private static final long MAX_RIPPLE_TIME = 0xFFFFFFFFL; // Ripple 시간이 담기는 필드는 32비트 부호 없는 정수
-    private static final UnsignedInteger ESCROW_D_TAG = UnsignedInteger.ONE;
 
     public CreateWalletResponse createWallet() {
         final HttpUrl devnetUrl = HttpUrl.parse(xrplConfig.getRpcUrl());
@@ -74,103 +58,6 @@ public class XRPLServiceImpl implements XRPLService {
                 randomKeyPair.publicKey().deriveAddress().value(),
                 seed.decodedSeed().bytes().toString() // TODO : to string
         );
-    }
-
-    @Override
-    public EscrowCreateResponse createEscrowWithXumm(String source, BigDecimal amount, String memo, Long finishAfter, Long cancelAfter, String condition) {
-        try {
-            log.info("Creating escrow with XUMM: source={}, amount={}, memo={}", source, amount, memo);
-
-            Map<String, Object> txJson = new HashMap<>();
-            txJson.put("TransactionType", "EscrowCreate");
-//            txJson.put("Account", source);
-            txJson.put("Destination", xummConfig.getMainAddress()); // Use main address as destination
-            txJson.put("Amount", String.valueOf(xrpToDrops(amount)));
-            txJson.put("Fee", "12");
-
-            // Add optional escrow parameters
-            if (finishAfter != null) {
-                txJson.put("FinishAfter", getSafeFinishAfter(finishAfter));
-            }
-            if (cancelAfter != null) {
-                txJson.put("CancelAfter", cancelAfter);
-            }
-            if (condition != null && !condition.trim().isEmpty()) {
-                txJson.put("Condition", condition);
-            }
-
-            // Add memo if provided
-            if (memo != null && !memo.trim().isEmpty()) {
-                txJson.put("Memos", createMemoArray(memo));
-            }
-
-            log.info("EscrowCreate transaction JSON: {}", txJson);
-
-            // Create XUMM payload with enhanced response
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("txjson", txJson);
-
-            Map<String, Object> options = new HashMap<>();
-            options.put("submit", true);
-            options.put("multisign", false);
-            options.put("expire", xummConfig.getExpirationMinutes());
-            payload.put("options", options);
-
-            Map<String, Object> customMeta = new HashMap<>();
-            customMeta.put("identifier", "escrow-create-" + System.currentTimeMillis());
-            customMeta.put("blob", Map.of(
-                    "title", "Create Escrow",
-                    "instruction", "Sign to create an escrow with " + amount + " XRP"
-            ));
-
-            if (xummConfig.getWebhookUrl() != null) {
-                customMeta.put("instruction", xummConfig.getWebhookUrl());
-            }
-
-            if (xummConfig.getReturnUrl() != null) {
-                customMeta.put("return_url", Map.of(
-                        "web", xummConfig.getReturnUrl(),
-                        "app", xummConfig.getReturnUrl()
-                ));
-            }
-
-            payload.put("custom_meta", customMeta);
-
-            // Submit to XUMM
-            JsonNode response = xummWebClient
-                    .post()
-                    .uri("/payload")
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            if (response == null || !response.has("uuid")) {
-                throw new RuntimeException("Invalid response from XUMM API");
-            }
-
-            String uuid = response.get("uuid").asText();
-            String qrPng = response.get("refs").get("qr_png").asText();
-            String signUrl = response.get("next").get("always").asText();
-
-            log.info("Created XUMM escrow payload: UUID={}, QR={}, SignURL={}", uuid, qrPng, signUrl);
-
-            return new EscrowCreateResponse(
-                    uuid,
-                    qrPng,
-                    signUrl,
-                    xummConfig.getWebhookUrl(),
-                    xummConfig.getReturnUrl(),
-                    "Escrow creation payload created successfully. Please sign using XUMM app."
-            );
-
-        } catch (WebClientResponseException e) {
-            log.error("Failed to create XUMM escrow payload: {}", e.getResponseBodyAsString(), e);
-            throw new RuntimeException("Failed to create XUMM escrow payload", e);
-        } catch (Exception e) {
-            log.error("Failed to create escrow with XUMM", e);
-            throw new RuntimeException("Failed to create escrow with XUMM", e);
-        }
     }
 
     @Override
@@ -194,7 +81,7 @@ public class XRPLServiceImpl implements XRPLService {
             final BcSignatureService signatureService = new BcSignatureService();
             final SingleSignedTransaction<NfTokenMint> transaction = signatureService.sign(mainWalletKeyPair.privateKey(), nfTokenMint);
             final SubmitResult<NfTokenMint> result = xrplClient.submit(transaction);
-//
+
 //            final NfTokenCreateOffer offer = NfTokenCreateOffer.builder()
 //                    .account(mainWalletKeyPair.publicKey().deriveAddress())
 //                    .nftokenId(nftokenId)
@@ -259,34 +146,67 @@ public class XRPLServiceImpl implements XRPLService {
     }
 
     @Override
-    public String completeEscrow(String escrowOwner, Integer offerSequence)
-            throws JsonRpcClientErrorException, JsonProcessingException {
-        final XrplClient xrplClient = xrplConfig.getXrplClient();
-        final KeyPair mainWalletKeyPair = xrplConfig.getCentralWalletKeyPair();
-        final AccountInfoResult mainAccountInfo = getAccountInfo(xrplClient, mainWalletKeyPair.publicKey().deriveAddress());
-        final FeeResult feeResult = xrplClient.fee();
+    public void completeBatchEscrow(List<EscrowParams> escrows) {
+        try {
+            final XrplClient xrplClient = xrplConfig.getXrplClient();
+            final KeyPair mainWalletKeyPair = xrplConfig.getCentralWalletKeyPair();
+            final BcSignatureService signatureService = new BcSignatureService();
+            final FeeResult feeResult = xrplClient.fee();
 
-        final EscrowFinish escrowFinish = EscrowFinish.builder()
-                .account(mainWalletKeyPair.publicKey().deriveAddress())
-                .fee(feeResult.drops().openLedgerFee())
-                .sequence(mainAccountInfo.accountData().sequence())
-                .owner(Address.of(escrowOwner))
-                .offerSequence(UnsignedInteger.valueOf(offerSequence))
-                .signingPublicKey(mainWalletKeyPair.publicKey())
-                .build();
+            final AccountInfoResult mainAccountInfo = getAccountInfo(xrplClient, mainWalletKeyPair.publicKey().deriveAddress());
 
-        final BcSignatureService signatureService = new BcSignatureService();
-        final SingleSignedTransaction<EscrowFinish> transaction = signatureService.sign(
-                mainWalletKeyPair.privateKey(), escrowFinish
-        );
-        final SubmitResult<EscrowFinish> result = xrplClient.submit(transaction);
+            for (int i = 0; i < escrows.size(); i++) {
+                EscrowParams escrowParam = escrows.get(i);
+                UnsignedInteger currentSequence = mainAccountInfo.accountData().sequence();
 
-        if (result.engineResult().equals("tesSUCCESS")) {
-            log.info("Escrow finish result, HASH: {} {}", result.engineResult(), result.transactionResult().hash());
-            return result.engineResultMessage();
-        } else {
-            log.error("Escrow finish result: {}", result.engineResult());
-            throw new RuntimeException("Escrow finish failed");
+                log.info("Starting batch escrow completion of {} escrows from sequence {}", escrows.size(), currentSequence);
+                
+                try {
+                    final EscrowFinish escrowFinish = EscrowFinish.builder()
+                            .account(mainWalletKeyPair.publicKey().deriveAddress())
+                            .fee(feeResult.drops().openLedgerFee())
+                            .sequence(currentSequence)
+                            .owner(Address.of(escrowParam.escrowOwner()))
+                            .offerSequence(UnsignedInteger.valueOf(escrowParam.offerSequence()))
+                            .signingPublicKey(mainWalletKeyPair.publicKey())
+                            .build();
+
+                    final SingleSignedTransaction<EscrowFinish> signedEscrowFinish = signatureService.sign(
+                            mainWalletKeyPair.privateKey(), escrowFinish);
+
+                    final SubmitResult<EscrowFinish> result = xrplClient.submit(signedEscrowFinish);
+                    
+                    if ("tesSUCCESS".equals(result.engineResult())) {
+                        log.info("Escrow completion {}/{} successful: Owner: {}, OfferSequence: {} - Hash: {}", 
+                                i + 1, escrows.size(),
+                                escrowParam.escrowOwner(),
+                                escrowParam.offerSequence(),
+                                result.transactionResult().hash());
+                    } else {
+                        log.error("Escrow completion {}/{} failed: {} - {}", 
+                                i + 1, escrows.size(), result.engineResult(), result.engineResultMessage());
+                        throw new RuntimeException("Escrow completion failed: " + result.engineResult());
+                    }
+
+                    currentSequence = currentSequence.plus(UnsignedInteger.ONE);
+
+                    if (i < escrows.size() - 1) {
+                        Thread.sleep(100);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to complete escrow {}/{}: Owner: {}, OfferSequence: {}", 
+                            i + 1, escrows.size(), 
+                            escrowParam.escrowOwner(),
+                            escrowParam.offerSequence(), e);
+                    throw new RuntimeException("Failed to complete escrow " + (i + 1) + ": " + e.getMessage(), e);
+                }
+            }
+
+            log.info("Successfully completed batch escrow completion of {} escrows", escrows.size());
+
+        } catch (Exception e) {
+            log.error("Failed to complete batch escrow", e);
+            throw new RuntimeException("Failed to complete batch escrow", e);
         }
     }
 
@@ -295,142 +215,118 @@ public class XRPLServiceImpl implements XRPLService {
         try {
             final XrplClient xrplClient = xrplConfig.getXrplClient();
             final KeyPair mainWalletKeyPair = xrplConfig.getCentralWalletKeyPair();
-            final AccountInfoResult mainAccountInfo = getAccountInfo(xrplClient, mainWalletKeyPair.publicKey().deriveAddress());
+            final BcSignatureService signatureService = new BcSignatureService();
             final FeeResult feeResult = xrplClient.fee();
-
-//            FeeResult feeResult = xrplClient.fee();
-//            AccountInfoResult accountInfo = this.scanForResult(
-//                    () -> this.getValidatedAccountInfo(sourceKeyPair.publicKey().deriveAddress())
-//            );
-//            XrpCurrencyAmount amount = XrpCurrencyAmount.ofDrops(12345);
-//
-//            Transaction transaction = Transaction
-//
-//            Payment payment = Payment.builder()
-//                    .account(sourceKeyPair.publicKey().deriveAddress())
-//                    .fee(FeeUtils.computeNetworkFees(feeResult).recommendedFee())
-//                    .sequence(accountInfo.accountData().sequence())
-//                    .destination(destinationKeyPair.publicKey().deriveAddress())
-//                    .amount(amount)
-//                    .signingPublicKey(sourceKeyPair.publicKey())
-//                    .build();
-//
-//            SingleSignedTransaction<Payment> signedPayment = signatureService.sign(sourceKeyPair.privateKey(), payment);
-//            SubmitResult<Payment> result = xrplClient.submit(signedPayment);
-
-//            log.info("Payment successful: https://testnet.xrpl.org/transactions/{}", result.transactionResult().hash());
-
+            
+            // 계정 정보 및 시작 sequence 확인
+            final AccountInfoResult mainAccountInfo = getAccountInfo(xrplClient, mainWalletKeyPair.publicKey().deriveAddress());
+            UnsignedInteger currentSequence = mainAccountInfo.accountData().sequence();
+            
+            log.info("Starting batch payment of {} transactions from sequence {}", payments.size(), currentSequence);
+            
+            // 각 payment를 개별 Payment 트랜잭션으로 순차 전송
+            for (int i = 0; i < payments.size(); i++) {
+                PaymentParams paymentParam = payments.get(i);
+                
+                try {
+                    // Payment 트랜잭션 빌드 - 기존 sendPayment와 완전히 동일한 방식
+                    Payment payment;
+                    if (paymentParam.destinationTag() != null && paymentParam.memo() != null) {
+                        // 둘 다 있는 경우
+                        payment = Payment.builder()
+                                .account(mainWalletKeyPair.publicKey().deriveAddress())
+                                .fee(feeResult.drops().openLedgerFee())
+                                .sequence(currentSequence)
+                                .destination(Address.of(paymentParam.destinationAddress()))
+                                .destinationTag(UnsignedInteger.valueOf(paymentParam.destinationTag()))
+                                .amount(XrpCurrencyAmount.ofDrops(xrpToDrops(paymentParam.amount())))
+                                .signingPublicKey(mainWalletKeyPair.publicKey())
+                                .addMemos(MemoWrapper.builder()
+                                        .memo(Memo.builder()
+                                                .memoData(paymentParam.memo())
+                                                .build())
+                                        .build())
+                                .build();
+                    } else if (paymentParam.destinationTag() != null) {
+                        // destinationTag만 있는 경우
+                        payment = Payment.builder()
+                                .account(mainWalletKeyPair.publicKey().deriveAddress())
+                                .fee(feeResult.drops().openLedgerFee())
+                                .sequence(currentSequence)
+                                .destination(Address.of(paymentParam.destinationAddress()))
+                                .destinationTag(UnsignedInteger.valueOf(paymentParam.destinationTag()))
+                                .amount(XrpCurrencyAmount.ofDrops(xrpToDrops(paymentParam.amount())))
+                                .signingPublicKey(mainWalletKeyPair.publicKey())
+                                .build();
+                    } else if (paymentParam.memo() != null && !paymentParam.memo().trim().isEmpty()) {
+                        // memo만 있는 경우
+                        payment = Payment.builder()
+                                .account(mainWalletKeyPair.publicKey().deriveAddress())
+                                .fee(feeResult.drops().openLedgerFee())
+                                .sequence(currentSequence)
+                                .destination(Address.of(paymentParam.destinationAddress()))
+                                .amount(XrpCurrencyAmount.ofDrops(xrpToDrops(paymentParam.amount())))
+                                .signingPublicKey(mainWalletKeyPair.publicKey())
+                                .addMemos(MemoWrapper.builder()
+                                        .memo(Memo.builder()
+                                                .memoData(paymentParam.memo())
+                                                .build())
+                                        .build())
+                                .build();
+                    } else {
+                        // 둘 다 없는 경우
+                        payment = Payment.builder()
+                                .account(mainWalletKeyPair.publicKey().deriveAddress())
+                                .fee(feeResult.drops().openLedgerFee())
+                                .sequence(currentSequence)
+                                .destination(Address.of(paymentParam.destinationAddress()))
+                                .amount(XrpCurrencyAmount.ofDrops(xrpToDrops(paymentParam.amount())))
+                                .signingPublicKey(mainWalletKeyPair.publicKey())
+                                .build();
+                    }
+                    
+                    // 트랜잭션 서명
+                    SingleSignedTransaction<Payment> signedPayment = signatureService.sign(
+                            mainWalletKeyPair.privateKey(), payment);
+                    
+                    // 트랜잭션 제출
+                    SubmitResult<Payment> result = xrplClient.submit(signedPayment);
+                    
+                    if ("tesSUCCESS".equals(result.engineResult())) {
+                        log.info("Payment {}/{} successful: {} -> {} ({} XRP) - Hash: {}", 
+                                i + 1, payments.size(),
+                                mainWalletKeyPair.publicKey().deriveAddress(),
+                                paymentParam.destinationAddress(), 
+                                paymentParam.amount(),
+                                result.transactionResult().hash());
+                    } else {
+                        log.error("Payment {}/{} failed: {} - {}", 
+                                i + 1, payments.size(), result.engineResult(), result.engineResultMessage());
+                        throw new RuntimeException("Payment failed: " + result.engineResult());
+                    }
+                    
+                    // 다음 sequence 번호로 증가
+                    currentSequence = currentSequence.plus(UnsignedInteger.ONE);
+                    
+                    // 네트워크 부하 방지를 위한 짧은 대기 (선택적)
+                    if (i < payments.size() - 1) {
+                        Thread.sleep(100); // 100ms 대기
+                    }
+                    
+                } catch (Exception e) {
+                    log.error("Failed to send payment {}/{}: {} -> {}", 
+                            i + 1, payments.size(), 
+                            mainWalletKeyPair.publicKey().deriveAddress(),
+                            paymentParam.destinationAddress(), e);
+                    throw new RuntimeException("Failed to send payment " + (i + 1) + ": " + e.getMessage(), e);
+                }
+            }
+            
+            log.info("Successfully completed batch payment of {} transactions", payments.size());
+            
         } catch (Exception e) {
-            log.error("Failed to send payment", e);
-            throw new RuntimeException("Failed to send payment", e);
-        }
-    }
-
-    @Override
-    public PayloadStatus getPayloadStatus(String payloadUuid) {
-        try {
-            JsonNode response = xummWebClient
-                    .get()
-                    .uri("/payload/" + payloadUuid)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            if (response == null) {
-                throw new RuntimeException("No response from XUMM API");
-            }
-
-            JsonNode meta = response.get("meta");
-            JsonNode response_node = response.get("response");
-
-            String status = meta.get("signed").asBoolean() ? "SIGNED" :
-                    meta.get("expired").asBoolean() ? "EXPIRED" :
-                            meta.get("cancelled").asBoolean() ? "CANCELLED" :
-                                    response_node != null && response_node.get("opened").asBoolean() ? "OPENED" : "WAITING";
-
-            String transactionHash = null;
-            String signerAddress = null;
-
-            if (response_node != null && response_node.get("txid") != null) {
-                transactionHash = response_node.get("txid").asText();
-            }
-
-            if (response_node != null && response_node.get("account") != null) {
-                signerAddress = response_node.get("account").asText();
-            }
-
-            return new PayloadStatus(
-                    payloadUuid,
-                    status,
-                    transactionHash,
-                    signerAddress,
-                    meta.get("signed").asBoolean()
-            );
-        } catch (WebClientResponseException e) {
-            log.error("Failed to get payload status: {}", e.getResponseBodyAsString(), e);
-            throw new RuntimeException("Failed to get payload status", e);
-        } catch (Exception e) {
-            log.error("Failed to get payload status", e);
-            throw new RuntimeException("Failed to get payload status", e);
-        }
-    }
-
-    private String createPayload(Map<String, Object> txJson, String title, String instruction) {
-        try {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("txjson", txJson);
-
-            Map<String, Object> options = new HashMap<>();
-            options.put("submit", true);
-            options.put("multisign", false);
-            options.put("expire", xummConfig.getExpirationMinutes());
-            payload.put("options", options);
-
-            Map<String, Object> customMeta = new HashMap<>();
-            customMeta.put("identifier", "xrpl-service-" + System.currentTimeMillis());
-            customMeta.put("blob", Map.of(
-                    "title", title,
-                    "instruction", instruction
-            ));
-
-            if (xummConfig.getWebhookUrl() != null) {
-                customMeta.put("instruction", xummConfig.getWebhookUrl());
-            }
-
-            if (xummConfig.getReturnUrl() != null) {
-                customMeta.put("return_url", Map.of(
-                        "web", xummConfig.getReturnUrl(),
-                        "app", xummConfig.getReturnUrl()
-                ));
-            }
-
-            payload.put("custom_meta", customMeta);
-
-            JsonNode response = xummWebClient
-                    .post()
-                    .uri("/payload")
-                    .bodyValue(payload)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
-
-            if (response == null || !response.has("uuid")) {
-                throw new RuntimeException("Invalid response from XUMM API");
-            }
-
-            String uuid = response.get("uuid").asText();
-            String qrPng = response.get("refs").get("qr_png").asText();
-            String signUrl = response.get("next").get("always").asText();
-
-            log.info("Created XUMM payload: UUID={}, QR={}, SignURL={}", uuid, qrPng, signUrl);
-
-            return uuid;
-        } catch (WebClientResponseException e) {
-            log.error("Failed to create XUMM payload: {}", e.getResponseBodyAsString(), e);
-            throw new RuntimeException("Failed to create XUMM payload", e);
-        } catch (Exception e) {
-            log.error("Failed to create XUMM payload", e);
-            throw new RuntimeException("Failed to create XUMM payload", e);
+            log.error("Failed to send batch payment", e);
+            throw new RuntimeException("Failed to send batch payment", e);
         }
     }
 
@@ -472,59 +368,4 @@ public class XRPLServiceImpl implements XRPLService {
             throw new RuntimeException("Failed to get account info", e);
         }
     }
-
-    // PRIVATE METHODS ---
-
-    private UnsignedLong instantToXrpTimestamp(Instant instant) {
-        return UnsignedLong.valueOf(instant.getEpochSecond() - 0x386d4380);
-    }
-
-    private Instant xrpTimestampToInstant(UnsignedLong xrpTimeStamp) {
-        return Instant.ofEpochSecond(xrpTimeStamp.plus(UnsignedLong.valueOf(0x386d4380)).longValue());
-    }
-
-    private Instant getMinExpirationTime(XrplClient xrplClient) {
-        LedgerResult result = getValidatedLedger(xrplClient);
-        Instant closeTime = xrpTimestampToInstant(
-                result.ledger().closeTime()
-                        .orElseThrow(() ->
-                                new RuntimeException("Ledger close time must be present to calculate a minimum expiration time.")
-                        )
-        );
-
-        Instant now = Instant.now();
-        return closeTime.isBefore(now) ? now : closeTime;
-    }
-
-    private LedgerResult getValidatedLedger(XrplClient xrplClient) {
-        try {
-            LedgerRequestParams params = LedgerRequestParams.builder()
-                    .ledgerSpecifier(LedgerSpecifier.VALIDATED)
-                    .build();
-            return xrplClient.ledger(params);
-        } catch (JsonRpcClientErrorException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    private long getSafeFinishAfter(long second) {
-        // 현재 UTC 시각
-        Instant now = Instant.now();
-
-        // Ripple Epoch (2000-01-01T00:00:00Z)
-        ZonedDateTime rippleEpoch = ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-        long rippleEpochSeconds = rippleEpoch.toEpochSecond();
-
-        // 현재 시각을 Ripple Epoch 기준 초로 변환
-        long nowSeconds = now.getEpochSecond();
-        long finishAfter = nowSeconds - rippleEpochSeconds;
-
-        // 안전하게 60초(1분) 추가
-        long safeFinishAfter = finishAfter + second;
-
-        System.out.println("최소 안전 FinishAfter 값: " + safeFinishAfter);
-
-        return safeFinishAfter;
-    }
-
 }
