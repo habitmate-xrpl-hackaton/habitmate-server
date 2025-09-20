@@ -11,8 +11,6 @@ import java.util.List;
 
 public interface XRPLService {
 
-    CreateWalletResponse createWallet();
-
     String mintNFT(String dest, String uri);
 
     List<String> nftUris(String source);
@@ -87,12 +85,6 @@ public interface XRPLService {
             String webhookUrl,
             String returnUrl,
             String message
-    ) {
-    }
-
-    record CreateWalletResponse(
-            String address,
-            String secret
     ) {
     }
 }

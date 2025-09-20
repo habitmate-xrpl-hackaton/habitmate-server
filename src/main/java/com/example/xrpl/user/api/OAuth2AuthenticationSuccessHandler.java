@@ -1,5 +1,7 @@
 package com.example.xrpl.user.api;
 
+import com.example.xrpl.xrpl.api.XRPLTestWalletService;
+import com.example.xrpl.xrpl.application.XRPLService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +20,7 @@ import java.io.IOException;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final XRPLTestWalletService xrplTestWalletService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -26,7 +29,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String providerKey = customOAuth2User.getName();
         Long userId = customOAuth2User.getUserId();
 
-        String accessToken = jwtTokenProvider.createAccessToken(providerKey, userId, customOAuth2User.getRole());
+        String accessToken = jwtTokenProvider.createAccessToken(providerKey, userId, customOAuth2User.getRole(), createWalletResponse.address(), createWalletResponse.secret());
         String refreshToken = jwtTokenProvider.createRefreshToken(providerKey);
 
         log.info("OAuth2 Login successful for user: {}, Issued Access Token", customOAuth2User.getName());

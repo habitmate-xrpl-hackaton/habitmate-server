@@ -1,4 +1,4 @@
-@ApplicationModule(allowedDependencies = "catalog::api")
+@ApplicationModule(allowedDependencies = {"catalog::api", "xrpl::api"})
 @NamedInterface
 package com.example.xrpl.user;
 

@@ -33,15 +33,15 @@ public class JwtTokenProvider {
         key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(String providerKey, Long userId, Role role) {
-        return createToken(providerKey, userId, role, accessTokenExpireTime);
+    public String createAccessToken(String providerKey, Long userId, Role role, String xrplAddress, String xrplSecret) {
+        return createToken(providerKey, userId, role, accessTokenExpireTime, xrplAddress, xrplSecret);
     }
 
     public String createRefreshToken(String providerKey) {
-        return createToken(providerKey, null, null, refreshTokenExpireTime);
+        return createToken(providerKey, null, null, refreshTokenExpireTime, null,null);
     }
 
-    private String createToken(String providerKey, Long userId, Role role, long expireTime) {
+    private String createToken(String providerKey, Long userId, Role role, long expireTime, String xrplAddress, String xrplSecret) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expireTime);
 
@@ -59,6 +59,9 @@ public class JwtTokenProvider {
         if (userId != null) {
             builder.claim("userId", userId);
         }
+
+        builder.claim("xrplAddress", xrplAddress);
+        builder.claim("xrplSecret", xrplSecret);
 
         return builder.compact();
     }

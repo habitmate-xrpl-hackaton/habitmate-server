@@ -46,10 +46,12 @@ public class User extends AbstractAggregateRoot<User> {
     @ManyToMany(mappedBy = "following", cascade = {PERSIST, REMOVE})
     private final Set<User> followers = new HashSet<>();
 
-    private User(String email, String providerKey, Role role) {
+    private User(String email, String providerKey, Role role, String walletAddress, String walletSecret) {
         this.email = email;
         this.providerKey = providerKey;
         this.role = role;
+        this.xrplAddress = walletAddress;
+        this.xrplSecret = walletSecret;
     }
 
     /**
@@ -60,8 +62,8 @@ public class User extends AbstractAggregateRoot<User> {
      * @param providerKey OAuth 제공자의 고유 키 (예: Google의 'sub')
      * @return 새로 생성된 User 객체
      */
-    public static User createNewUser(String email, String providerKey) {
-        User user = new User(email, providerKey, Role.USER);
+    public static User createNewUser(String email, String providerKey, String walletAddress, String walletSecret) {
+        User user = new User(email, providerKey, Role.USER, walletAddress, walletSecret);
         user.registerEvent(new UserCreatedEvent(user.getId()));
         return user;
     }
