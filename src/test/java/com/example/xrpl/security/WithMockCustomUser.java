@@ -12,4 +12,9 @@ public @interface WithMockCustomUser {
     long userId() default 1L;
 
     String email() default "test@example.com";
+
+    String xrplAddress() default "asdasd";
+
+    String xrplSecret() default "asdasd";
+
 }

@@ -40,17 +40,21 @@ public class CustomOAuth2User extends DefaultOAuth2User {
         this.xrplSecret = secret;
     }
 
-    public CustomOAuth2User(Long userId, String email, String role) {
+    public CustomOAuth2User(Long userId, String email, String role, String xrplAddress, String xrplSecret) {
         super(List.of(new SimpleGrantedAuthority(role)), Map.of("email", email), "email");
         this.userId = userId;
         this.role = Role.valueOf(role.replace("ROLE_", ""));
+        this.xrplAddress = xrplAddress;
+        this.xrplSecret = xrplSecret;
     }
 
     public static CustomOAuth2User fromClaims(Claims claims) {
         Long userId = claims.get("userId", Long.class);
         String role = claims.get("role", String.class);
         String providerKey = claims.getSubject();
+        String walletAddress = claims.get("xrplAddress", String.class);
+        String walletSecret = claims.get("xrplSecret", String.class);
 
-        return new CustomOAuth2User(userId, providerKey, "ROLE_" + role);
+        return new CustomOAuth2User(userId, providerKey, "ROLE_" + role, walletAddress, walletSecret);
     }
 }

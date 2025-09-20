@@ -1,7 +1,6 @@
 package com.example.xrpl.user.api;
 
 import com.example.xrpl.xrpl.api.XRPLTestWalletService;
-import com.example.xrpl.xrpl.application.XRPLService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,7 +28,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String providerKey = customOAuth2User.getName();
         Long userId = customOAuth2User.getUserId();
 
-        String accessToken = jwtTokenProvider.createAccessToken(providerKey, userId, customOAuth2User.getRole(), createWalletResponse.address(), createWalletResponse.secret());
+        String accessToken = jwtTokenProvider.createAccessToken(providerKey, userId, customOAuth2User.getRole(), customOAuth2User.getXrplAddress(), customOAuth2User.getXrplSecret());
         String refreshToken = jwtTokenProvider.createRefreshToken(providerKey);
 
         log.info("OAuth2 Login successful for user: {}, Issued Access Token", customOAuth2User.getName());
