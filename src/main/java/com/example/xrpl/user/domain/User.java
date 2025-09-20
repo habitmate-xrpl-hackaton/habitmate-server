@@ -43,6 +43,9 @@ public class User extends AbstractAggregateRoot<User> {
     @Column
     private String issuerAddress;
 
+    @Column
+    private String credentialType;
+
     @ManyToMany(cascade = {PERSIST, REMOVE})
     @JoinTable(name = "follow",
             joinColumns = @JoinColumn(name = "follower_id"),
@@ -89,7 +92,8 @@ public class User extends AbstractAggregateRoot<User> {
         this.isKYC = true;
     }
 
-    public void updateIssuerAddress(String issuerAddress) {
+    public void updateCredentialInfo(String issuerAddress, String credentialType) {
         this.issuerAddress = issuerAddress;
+        this.credentialType = credentialType;
     }
 }

@@ -47,7 +47,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 user.getXrplAddress(),
                 user.getXrplSecret(),
                 user.getIsKYC(),
-                user.getIssuerAddress()
+                user.getIssuerAddress(),
+                user.getCredentialType()
         );
     }
 
@@ -67,7 +68,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
                     XRPLService.CredentialCreateResponse credentialResponse = xrplService.createCredential(params);
 
-                    savedUser.updateIssuerAddress(credentialResponse.issuerAddress());
+                    savedUser.updateCredentialInfo(credentialResponse.issuerAddress(), credentialResponse.credentialType());
 
                     return userRepository.save(savedUser);
                 });

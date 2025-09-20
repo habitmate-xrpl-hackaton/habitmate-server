@@ -30,17 +30,17 @@ public class JwtTokenProvider {
         key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(String providerKey, Long userId, Role role, String xrplAddress, String xrplSecret, Boolean isKYC, String issuerAddress) {
+    public String createAccessToken(String providerKey, Long userId, Role role, String xrplAddress, String xrplSecret, Boolean isKYC, String issuerAddress, String credentialType) {
         Date expiryDate = Date.from(Instant.now().plusMillis(accessTokenExpireTime));
-        return createToken(providerKey, userId, role, expiryDate, xrplAddress, xrplSecret, isKYC, issuerAddress);
+        return createToken(providerKey, userId, role, expiryDate, xrplAddress, xrplSecret, isKYC, issuerAddress, credentialType);
     }
 
     public String createRefreshToken(String providerKey) {
         Date expiryDate = Date.from(Instant.now().plusMillis(refreshTokenExpireTime));
-        return createToken(providerKey, null, null, expiryDate, null,null, null, null);
+        return createToken(providerKey, null, null, expiryDate, null,null, null, null, null);
     }
 
-    private String createToken(String providerKey, Long userId, Role role, Date expiryDate, String xrplAddress, String xrplSecret, Boolean isKYC, String issuerAddress) {
+    private String createToken(String providerKey, Long userId, Role role, Date expiryDate, String xrplAddress, String xrplSecret, Boolean isKYC, String issuerAddress, String credentialType) {
         JwtBuilder builder = Jwts.builder()
                 .subject(providerKey)
                 .issuedAt(new Date())
@@ -64,6 +64,9 @@ public class JwtTokenProvider {
         }
         if (issuerAddress != null) {
             builder.claim("issuerAddress", issuerAddress);
+        }
+        if (credentialType != null) {
+            builder.claim("credentialType", credentialType);
         }
 
         return builder.compact();
