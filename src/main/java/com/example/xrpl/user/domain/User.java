@@ -31,6 +31,12 @@ public class User extends AbstractAggregateRoot<User> {
     @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false)
+    private String xrplAddress;
+
+    @Column(nullable = false)
+    private String xrplSecret;
+
     @ManyToMany(cascade = {PERSIST, REMOVE})
     @JoinTable(name = "follow",
             joinColumns = @JoinColumn(name = "follower_id"),

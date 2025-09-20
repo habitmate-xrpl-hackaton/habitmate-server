@@ -2,6 +2,7 @@ package com.example.xrpl.participation.domain.model;
 
 import com.example.xrpl.participation.api.ProofAddedEvent;
 import com.example.xrpl.participation.api.ProofStatusUpdatedEvent;
+import com.example.xrpl.participation.domain.ParticipationStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
@@ -32,9 +33,12 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Proof> proofs = new ArrayList<>();
 
+    private ParticipationStatus status;
+
     private ChallengeParticipant(long challengeId, Long userId) {
         this.challengeId = challengeId;
         this.userId = userId;
+        this.status = ParticipationStatus.PENDING_PAYMENT;
     }
 
     public static ChallengeParticipant of(long challengeId, Long userId) {
