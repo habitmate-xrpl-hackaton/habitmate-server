@@ -29,9 +29,16 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
     @Column(name = "user_id", nullable = false, updatable = false)
     private Long userId;
 
+    @Column(name = "escrow_owner")
+    private String escrowOwner;
+
+    @Column(name = "offer_sequence")
+    private String offerSequence;
+
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Proof> proofs = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
     private ParticipationStatus status;
 
     private ChallengeParticipant(long challengeId, Long userId) {
@@ -40,9 +47,20 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
         this.status = ParticipationStatus.PENDING_PAYMENT;
     }
 
+    private ChallengeParticipant(long challengeId, Long userId, String escrowOwner, String offerSequence) {
+        this.challengeId = challengeId;
+        this.userId = userId;
+        this.escrowOwner = escrowOwner;
+        this.offerSequence = offerSequence;
+        this.status = ParticipationStatus.ACTIVE;
+    }
+
     public static ChallengeParticipant of(long challengeId, Long userId) {
-        ChallengeParticipant participant = new ChallengeParticipant(challengeId, userId);
-        return participant;
+        return new ChallengeParticipant(challengeId, userId);
+    }
+
+    public static ChallengeParticipant of(long challengeId, Long userId, String escrowOwner, String offerSequence) {
+        return new ChallengeParticipant(challengeId, userId, escrowOwner, offerSequence);
     }
 
     /**

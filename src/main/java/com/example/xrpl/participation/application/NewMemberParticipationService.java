@@ -1,5 +1,5 @@
 package com.example.xrpl.participation.application;
 
 public interface NewMemberParticipationService {
-    void participateInChallenge(Long challengeId, Long userId);
+    void participateInChallenge(Long challengeId, Long userId, String escrowOwner, String offerSequence);
 }
