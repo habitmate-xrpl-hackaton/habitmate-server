@@ -2,9 +2,8 @@ package com.example.xrpl.xrpl.application;
 
 import com.example.xrpl.xrpl.api.XRPLTestWalletService;
 import com.example.xrpl.xrpl.config.XRPLConfig;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedInteger;
-import com.google.common.primitives.UnsignedLong;
-import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.HttpUrl;
@@ -13,16 +12,19 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.xrpl.xrpl4j.client.XrplClient;
 import org.xrpl.xrpl4j.client.faucet.FaucetClient;
 import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
+import org.xrpl.xrpl4j.codec.addresses.AddressBase58;
+import org.xrpl.xrpl4j.codec.addresses.AddressCodec;
+import org.xrpl.xrpl4j.codec.addresses.UnsignedByteArray;
+import org.xrpl.xrpl4j.codec.addresses.Version;
+import org.xrpl.xrpl4j.crypto.keys.Entropy;
 import org.xrpl.xrpl4j.crypto.keys.KeyPair;
 import org.xrpl.xrpl4j.crypto.keys.Seed;
 import org.xrpl.xrpl4j.crypto.signing.SingleSignedTransaction;
 import org.xrpl.xrpl4j.crypto.signing.bc.BcSignatureService;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
-import org.xrpl.xrpl4j.model.client.accounts.AccountNftsResult;
 import org.xrpl.xrpl4j.model.client.common.LedgerSpecifier;
 import org.xrpl.xrpl4j.model.client.fees.FeeResult;
-import org.xrpl.xrpl4j.model.client.fees.FeeUtils;
 import org.xrpl.xrpl4j.model.client.transactions.SubmitResult;
 import org.xrpl.xrpl4j.model.transactions.*;
 
@@ -30,6 +32,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -43,100 +46,21 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
         final HttpUrl faucetUrl = HttpUrl.parse("https://faucet.devnet.rippletest.net");
         assert devnetUrl != null;
         final FaucetClient faucetClient = FaucetClient.construct(faucetUrl);
-        final Seed seed = Seed.ed25519Seed();
+        final Entropy entropy = Entropy.newInstance();
+        final Seed seed = Seed.ed25519SeedFromEntropy(entropy);
+        final String secret = AddressBase58.encode(
+                entropy.value(),
+                Lists.newArrayList(Version.ED25519_SEED),
+                UnsignedInteger.valueOf(entropy.value().length())
+        );
         final KeyPair randomKeyPair = seed.deriveKeyPair();
 
         faucetClient.fundAccount(FundAccountRequest.of(randomKeyPair.publicKey().deriveAddress()));
 
         return new CreateWalletResponse(
                 randomKeyPair.publicKey().deriveAddress().value(),
-                seed.decodedSeed().bytes().toString() // TODO : to string
+                secret
         );
-    }
-
-    @Override
-    public String mintNFT(String dest, String uri) {
-        try {
-            final XrplClient xrplClient = xrplConfig.getXrplClient();
-            final KeyPair mainWalletKeyPair = xrplConfig.getCentralWalletKeyPair();
-            final AccountInfoResult mainAccountInfo = getAccountInfo(xrplClient, mainWalletKeyPair.publicKey().deriveAddress());
-            final FeeResult feeResult = xrplClient.fee();
-
-            final NfTokenUri nfTokenUri = NfTokenUri.ofPlainText("ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf4dfuylqabf3oclgtqy55fbzdi");
-            final NfTokenMint nfTokenMint = NfTokenMint.builder()
-                    .tokenTaxon(UnsignedLong.ONE)
-                    .account(mainWalletKeyPair.publicKey().deriveAddress())
-                    .signingPublicKey(mainWalletKeyPair.publicKey())
-                    .sequence(mainAccountInfo.accountData().sequence())
-                    .fee(FeeUtils.computeNetworkFees(feeResult).recommendedFee())
-                    .uri(nfTokenUri)
-                    .build();
-
-            final BcSignatureService signatureService = new BcSignatureService();
-            final SingleSignedTransaction<NfTokenMint> transaction = signatureService.sign(mainWalletKeyPair.privateKey(), nfTokenMint);
-            final SubmitResult<NfTokenMint> result = xrplClient.submit(transaction);
-
-//            final NfTokenCreateOffer offer = NfTokenCreateOffer.builder()
-//                    .account(mainWalletKeyPair.publicKey().deriveAddress())
-//                    .nftokenId(nftokenId)
-//                    .amount(XrpCurrencyAmount.ofDrops(0)) // 0이면 무료 전송
-//                    .destination(Address.of(destinationAddress))
-//                    .signingPublicKey(mainWalletKeyPair.publicKey())
-//                    .sequence(mainAccountInfo.accountData().sequence())
-//                    .fee(FeeUtils.computeNetworkFees(feeResult).recommendedFee())
-//                    .build();
-//
-//            // send NFT
-//            final NfTokenCreateOffer nfTokenCreateOffer = NfTokenCreateOffer.builder()
-//                    .account(keyPair.publicKey().deriveAddress())
-//                    .nfTokenId(tokenId)
-//                    .fee(FeeUtils.computeNetworkFees(xrplClient.fee()).recommendedFee())
-//                    .sequence(accountInfoResult.accountData().sequence().plus(UnsignedInteger.ONE))
-//                    .amount(XrpCurrencyAmount.ofDrops(1000))
-//                    .flags(NfTokenCreateOfferFlags.builder()
-//                            .tfSellToken(true)
-//                            .build())
-//                    .signingPublicKey(keyPair.publicKey())
-//                    .build();
-//
-//            SingleSignedTransaction<NfTokenCreateOffer> signedOffer = signatureService.sign(
-//                    keyPair.privateKey(),
-//                    nfTokenCreateOffer
-//            );
-//            SubmitResult<NfTokenCreateOffer> nfTokenCreateOfferSubmitResult = xrplClient.submit(signedOffer);
-//            assertThat(nfTokenCreateOfferSubmitResult.engineResult()).isEqualTo(TransactionResultCodes.TES_SUCCESS);
-//            assertThat(signedOffer.hash()).isEqualTo(nfTokenCreateOfferSubmitResult.transactionResult().hash());
-
-            if (result.engineResult().equals("tesSUCCESS")) {
-                log.info("Issue NFT finish result, HASH: {} {}", result.engineResult(), result.transactionResult().hash());
-                return result.engineResultMessage();
-            } else {
-                log.error("Issue NFT finish result: {}", result.engineResult());
-                throw new RuntimeException("Issue NFT finish failed");
-            }
-        } catch (Exception e) {
-            log.error("Failed to issue NFT", e);
-            throw new RuntimeException("Failed to issue NFT", e);
-        }
-    }
-
-    @Override
-    public List<String> nftUris(String source) {
-        try {
-            final XrplClient xrplClient = xrplConfig.getXrplClient();
-            final AccountNftsResult accountNftsResult = xrplClient.accountNfts(Address.of(source));
-            return accountNftsResult.accountNfts().stream().map(nfTokenObject -> {
-                if (nfTokenObject.uri().isEmpty()) {
-                    throw new RuntimeException("NFT URI is empty");
-                }
-                final String hex = nfTokenObject.uri().get().value();
-                byte[] bytes = DatatypeConverter.parseHexBinary(hex);
-                return new String(bytes);
-            }).toList();
-        } catch (Exception e) {
-            log.error("Failed to get NFT", e);
-            throw new RuntimeException("Failed to get NFT", e);
-        }
     }
 
     @Override
