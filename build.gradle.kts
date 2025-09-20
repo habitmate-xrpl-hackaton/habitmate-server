@@ -1,3 +1,4 @@
+
 plugins {
 	java
 	id("org.springframework.boot") version "3.5.5"
@@ -30,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
@@ -40,10 +42,22 @@ dependencies {
 
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.12")
 
+	// XRPL4J dependencies
+	implementation (platform("org.xrpl:xrpl4j-bom:3.2.1"))
+	implementation ("org.xrpl:xrpl4j-core")
+	implementation ("org.xrpl:xrpl4j-client")
+
+	// XUMM SDK dependencies
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("com.fasterxml.jackson.core:jackson-databind")
+	implementation("org.apache.httpcomponents.client5:httpclient5")
+
+	// Test Dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	testRuntimeOnly("com.h2database:h2")
 }
 
 dependencyManagement {

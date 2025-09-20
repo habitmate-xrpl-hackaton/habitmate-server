@@ -26,3 +26,10 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+xumm:
+  api-key: ${XUMM_API_KEY}
+  api-secret: ${XUMM_API_SECRET}
+  webhook-url: ${XUMM_WEBHOOK_URL:}
+  return-url: ${XUMM_RETURN_URL:}
+  expiration-minutes: 10
