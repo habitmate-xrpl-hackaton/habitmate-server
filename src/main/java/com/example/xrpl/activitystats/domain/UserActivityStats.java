@@ -3,7 +3,8 @@ package com.example.xrpl.activitystats.domain;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor; 
+import lombok.NoArgsConstructor;
+import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.time.LocalDate;
 
@@ -11,7 +12,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "user_activity_stats")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserActivityStats {
+public class UserActivityStats extends AbstractAggregateRoot<UserActivityStats> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,7 +1,6 @@
 package com.example.xrpl.participation.domain.model;
 
 import com.example.xrpl.participation.api.ChallengeParticipantCreatedEvent;
-import com.example.xrpl.participation.api.ProofAddedEvent;
 import com.example.xrpl.participation.api.ProofStatusUpdatedEvent;
 import com.example.xrpl.participation.domain.ParticipationStatus;
 import jakarta.persistence.*;
@@ -57,18 +56,17 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
     }
 
     /**
-     * 챌린지 참가자의 인증(Proof)을 추가합니다.
-     * 이 메서드는 애그리게이트의 상태를 변경하는 유일한 진입점 역할을 합니다.
-     * 내부적으로 Proof를 생성하고, 양방향 연관관계를 설정하며, 도메인 이벤트를 발행합니다.
+     * 챌린지 참가자의 인증(Proof)을 추가하고, 추가된 Proof 객체를 반환합니다.
      *
      * @param imageUrl    인증 이미지 URL
      * @param description 인증 설명
      * @param hashtags    해시태그 엔티티 Set
+     * @return 생성 및 추가된 Proof 엔티티
      */
-    public void addProof(String imageUrl, String description, Set<Hashtag> hashtags) {
+    public Proof addProof(String imageUrl, String description, Set<Hashtag> hashtags) {
         Proof proof = Proof.of(this, LocalDateTime.now(), false, imageUrl, description, hashtags);
         this.proofs.add(proof);
-        registerEvent(new ProofAddedEvent(this.id, this.id, proof.getId(), imageUrl));
+        return proof;
     }
 
     public void verifyProof(Long proofId, boolean isSuccess) {

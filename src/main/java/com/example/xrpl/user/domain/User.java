@@ -65,9 +65,12 @@ public class User extends AbstractAggregateRoot<User> {
     }
 
     public static User createNewUser(String email, String providerKey, String xrplAddress, String xrplSecret) {
-        User user = new User(email, providerKey, Role.USER, xrplAddress, xrplSecret, false);
-        user.registerEvent(new UserCreatedEvent(user.getId()));
-        return user;
+        return new User(email, providerKey, Role.USER, xrplAddress, xrplSecret, false);
+    }
+
+    @PostPersist
+    private void publishOnCreate() {
+        registerEvent(new UserCreatedEvent(id));
     }
 
     public void toggleFollow(User userToFollow) {

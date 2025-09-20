@@ -7,7 +7,9 @@ import com.example.xrpl.user.api.UserCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.modulith.events.ApplicationModuleListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -16,7 +18,8 @@ public class UserActivityStatsEventListener {
 
     private final UserActivityStatsRepository userActivityStatsRepository;
 
-    @ApplicationModuleListener
+    @Async
+    @TransactionalEventListener()
     public void handleUserCreatedEvent(UserCreatedEvent event) {
         log.info("Received UserCreatedEvent for userId: {}", event.userId());
         if (userActivityStatsRepository.findByUserId(event.userId()).isEmpty()) {
