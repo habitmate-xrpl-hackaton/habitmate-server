@@ -1,5 +1,6 @@
 package com.example.xrpl.catalog.application;
 
+import com.example.xrpl.catalog.api.CatalogCommandService;
 import com.example.xrpl.participation.api.ChallengeParticipantCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
