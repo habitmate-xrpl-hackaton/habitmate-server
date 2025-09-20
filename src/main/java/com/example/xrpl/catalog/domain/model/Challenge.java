@@ -1,17 +1,18 @@
 package com.example.xrpl.catalog.domain.model;
 
+import com.example.xrpl.catalog.api.ChallengeCompletedEvent;
 import com.example.xrpl.catalog.api.ChallengeCreateRequest;
 import com.example.xrpl.catalog.domain.event.ChallengeCreatedEvent;
 
 import jakarta.persistence.*;
+import jdk.jfr.Frequency;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "challenges")
@@ -85,15 +86,15 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
     }
 
     private static Challenge createSoloChallenge(ChallengeCreateRequest request) {
-        return new Challenge(request.title(),request.description(), ChallengeType.SOLO, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()), request.entryFee(), new Fee("XRP", new BigDecimal("0.0")), request.rules(), 1, 1);
+        return new Challenge(request.title(), request.description(), ChallengeType.SOLO, request.category(), request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()), request.entryFee(), new Fee("XRP", new BigDecimal("0.0")), request.rules(), 1, 1);
     }
 
     private static Challenge createGroupChallenge(ChallengeCreateRequest request) {
-        return new Challenge(request.title(),request.description(), ChallengeType.GROUP, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()),request.entryFee(),request.serviceFee(), request.rules(), request.maxParticipants(), 1);
+        return new Challenge(request.title(), request.description(), ChallengeType.GROUP, request.category(), request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()), request.entryFee(), request.serviceFee(), request.rules(), request.maxParticipants(), 1);
     }
 
     private static Challenge createBrandChallenge(ChallengeCreateRequest request) {
-        return new Challenge(request.title(),request.description(), ChallengeType.BRAND, request.category(),request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()),request.entryFee(),request.serviceFee(), request.rules(), request.maxParticipants(), 1);
+        return new Challenge(request.title(), request.description(), ChallengeType.BRAND, request.category(), request.difficulty(), new Period(request.startDate(), request.endDate()), new VerificationRule(request.proofType(), request.frequency()), request.entryFee(), request.serviceFee(), request.rules(), request.maxParticipants(), 1);
     }
 
     public static Challenge of(ChallengeCreateRequest request) {
@@ -157,5 +158,25 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
             throw new IllegalStateException("Challenge is not recruiting or is already full.");
         }
         this.currentParticipantsCount++;
+    }
+
+    /**
+     * 챌린지를 종료 상태로 변경하고, 관련 이벤트를 발행합니다.
+     */
+    public void endChallenge() {
+        if (this.status == ChallengeStatus.COMPLETED) {
+            throw new IllegalStateException("Challenge has already ended.");
+        }
+        this.status = ChallengeStatus.COMPLETED;
+
+        // 챌린지 종료 이벤트 발행
+        registerEvent(new ChallengeCompletedEvent(this.id));
+    }
+
+
+    public int calculateTotalProofCount() {
+        long durationDays = java.time.temporal.ChronoUnit.DAYS.between(this.period.startDate(), this.period.endDate()) + 1;
+        ProofFrequency frequency = this.verificationRule.frequency();
+        return frequency.calculateTotalCount(durationDays);
     }
 }

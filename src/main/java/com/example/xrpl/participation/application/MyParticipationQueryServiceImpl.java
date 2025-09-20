@@ -1,7 +1,8 @@
 package com.example.xrpl.participation.application;
 
 import com.example.xrpl.catalog.api.ChallengeCatalogInfoDto;
-import com.example.xrpl.catalog.api.ChallengeQueryService;
+import com.example.xrpl.catalog.api.CatalogQueryService;
+import com.example.xrpl.catalog.api.ChallengeDetailDto;
 import com.example.xrpl.participation.api.MyParticipationListDto;
 import com.example.xrpl.participation.domain.model.ChallengeParticipant;
 import com.example.xrpl.participation.infrastructure.ChallengeParticipantRepository;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 public class MyParticipationQueryServiceImpl implements MyParticipationQueryService {
 
     private final ChallengeParticipantRepository challengeParticipantRepository;
-    private final ChallengeQueryService challengeQueryService;
+    private final CatalogQueryService challengeQueryService;
 
     @Override
     public Page<MyParticipationListDto> findMyParticipations(Long userId, Pageable pageable) {
@@ -33,13 +34,13 @@ public class MyParticipationQueryServiceImpl implements MyParticipationQueryServ
                 .toList();
 
         // 2. Catalog 모듈의 API를 통해 필요한 챌린지 정보들을 한번에 조회
-        Map<Long, ChallengeCatalogInfoDto> challengeInfoMap = challengeQueryService.findChallengesByIds(challengeIds).stream()
-                .collect(Collectors.toMap(ChallengeCatalogInfoDto::id, Function.identity()));
+        Map<Long, ChallengeDetailDto> challengeInfoMap = challengeQueryService.findChallengesByIds(challengeIds).stream()
+                .collect(Collectors.toMap(ChallengeDetailDto::id, Function.identity()));
 
         // 3. 두 데이터를 조합하여 최종 DTO 리스트 생성
         List<MyParticipationListDto> dtoList = participantsPage.getContent().stream()
                 .map(participant -> {
-                    ChallengeCatalogInfoDto challengeInfo = challengeInfoMap.get(participant.getChallengeId());
+                    ChallengeDetailDto challengeInfo = challengeInfoMap.get(participant.getChallengeId());
                     if (challengeInfo == null) {
                         throw new IllegalStateException("Challenge information not found for ID: " + participant.getChallengeId());
                     }
@@ -65,7 +66,7 @@ public class MyParticipationQueryServiceImpl implements MyParticipationQueryServ
         return new PageImpl<>(dtoList, pageable, participantsPage.getTotalElements());
     }
 
-    private long calculateTotalProofCount(ChallengeCatalogInfoDto challengeInfo) {
+    private long calculateTotalProofCount(ChallengeDetailDto challengeInfo) {
         if (challengeInfo.startDate() == null || challengeInfo.endDate() == null) {
             return 0;
         }

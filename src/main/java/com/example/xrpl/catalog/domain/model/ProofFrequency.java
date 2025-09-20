@@ -34,4 +34,14 @@ public enum ProofFrequency {
     public int getTimes() {
         return times;
     }
+
+    /* 주어진 기간(일)과 주당 인증 횟수를 바탕으로 총 인증 횟수를 계산합니다.
+     *
+     * @param durationDays 챌린지 총 기간(일)
+     * @return 계산된 총 인증 횟수
+     */
+    public int calculateTotalCount(long durationDays) {
+        long weeks = (durationDays + 6) / 7; // 올림 계산
+        return (int) (weeks * this.times);
+    }
 }

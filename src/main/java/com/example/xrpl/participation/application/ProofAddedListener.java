@@ -1,6 +1,6 @@
 package com.example.xrpl.participation.application;
 
-import com.example.xrpl.catalog.api.ChallengeQueryService;
+import com.example.xrpl.catalog.api.CatalogQueryService;
 import com.example.xrpl.participation.api.AiProofVerifier;
 import com.example.xrpl.participation.api.ProofAddedEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,7 +19,7 @@ public class ProofAddedListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ProofAddedListener.class);
     private final AiProofVerifier aiProofVerifier;
-    private final ChallengeQueryService challengeQueryService; // Repository 대신 QueryService 사용
+    private final CatalogQueryService challengeQueryService; // Repository 대신 QueryService 사용
     private final ObjectMapper objectMapper;
 
     @ApplicationModuleListener
