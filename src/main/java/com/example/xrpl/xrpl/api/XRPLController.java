@@ -37,6 +37,44 @@ public class XRPLController {
         }
     }
 
+    @PostMapping("/credential/create")
+    public ResponseEntity<XRPLService.CredentialCreateResponse> createCredential(
+            @RequestBody CredentialCreateRequest request
+    ) {
+        try {
+            XRPLService.CredentialCreateResponse response = xrplService.createCredential(
+                    new XRPLService.CredentialCreateParams(
+                            request.subjectAddress(),
+                            request.credentialType(),
+                            request.uri(),
+                            request.expirationDays()
+                    )
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Failed to create credential", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/credential/accept")
+    public ResponseEntity<XRPLService.CredentialAcceptResponse> acceptCredential(
+            @RequestBody CredentialAcceptRequest request
+    ) {
+        try {
+            XRPLService.CredentialAcceptResponse response = xrplService.acceptCredential(
+                    new XRPLService.CredentialAcceptParams(
+                            request.issuerAddress(),
+                            request.credentialType()
+                    )
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Failed to accept credential", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @PostMapping("/payment/batch")
     public ResponseEntity<Map<String, String>> sendBatchPayment(
             @RequestBody BatchPaymentRequest request
@@ -119,6 +157,26 @@ public class XRPLController {
      */
     public record BatchEscrowRequest(
             List<XRPLService.EscrowParams> escrows
+    ) {
+    }
+
+    /**
+     * Request DTO for credential creation
+     */
+    public record CredentialCreateRequest(
+            String subjectAddress,
+            String credentialType,
+            String uri,
+            Long expirationDays
+    ) {
+    }
+
+    /**
+     * Request DTO for credential acceptance
+     */
+    public record CredentialAcceptRequest(
+            String issuerAddress,
+            String credentialType
     ) {
     }
 

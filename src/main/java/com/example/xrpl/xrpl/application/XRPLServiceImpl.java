@@ -148,14 +148,20 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
             final FeeResult feeResult = xrplClient.fee();
 
             final AccountInfoResult mainAccountInfo = getAccountInfo(xrplClient, mainWalletKeyPair.publicKey().deriveAddress());
+            UnsignedInteger currentSequence = mainAccountInfo.accountData().sequence();
+
+            log.info("Starting batch escrow completion of {} escrows from sequence {}", escrows.size(), currentSequence);
 
             for (int i = 0; i < escrows.size(); i++) {
                 EscrowParams escrowParam = escrows.get(i);
-                UnsignedInteger currentSequence = mainAccountInfo.accountData().sequence();
-
-                log.info("Starting batch escrow completion of {} escrows from sequence {}", escrows.size(), currentSequence);
 
                 try {
+                    log.info("Processing escrow {}/{}: Owner: {}, OfferSequence: {}, Sequence: {}", 
+                            i + 1, escrows.size(), 
+                            escrowParam.escrowOwner(), 
+                            escrowParam.offerSequence(), 
+                            currentSequence);
+
                     final EscrowFinish escrowFinish = EscrowFinish.builder()
                             .account(mainWalletKeyPair.publicKey().deriveAddress())
                             .fee(feeResult.drops().openLedgerFee())
@@ -177,15 +183,23 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
                                 escrowParam.offerSequence(),
                                 result.transactionResult().hash());
                     } else {
-                        log.error("Escrow completion {}/{} failed: {} - {}",
+                        log.error("Escrow completion {}/{} failed: {} - {}", 
                                 i + 1, escrows.size(), result.engineResult(), result.engineResultMessage());
-                        throw new RuntimeException("Escrow completion failed: " + result.engineResult());
+                        
+                        // Continue with next escrow instead of throwing exception for certain errors
+                        if ("tecNO_TARGET".equals(result.engineResult())) {
+                            log.warn("Escrow {}/{} does not exist or already completed - skipping", i + 1, escrows.size());
+                            // Don't increment sequence for failed transaction
+                            continue;
+                        } else {
+                            throw new RuntimeException("Escrow completion failed: " + result.engineResult());
+                        }
                     }
 
                     currentSequence = currentSequence.plus(UnsignedInteger.ONE);
 
                     if (i < escrows.size() - 1) {
-                        Thread.sleep(100);
+                        Thread.sleep(1000);
                     }
                 } catch (Exception e) {
                     log.error("Failed to complete escrow {}/{}: Owner: {}, OfferSequence: {}",
@@ -201,6 +215,148 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
         } catch (Exception e) {
             log.error("Failed to complete batch escrow", e);
             throw new RuntimeException("Failed to complete batch escrow", e);
+        }
+    }
+
+    @Override
+    public CredentialCreateResponse createCredential(CredentialCreateParams credentialParams) {
+        // NOTE: CredentialCreate and CredentialAccept transactions are not yet available in the current XRPL4J version
+        // This is a placeholder implementation that simulates credential creation using Payment transactions with memos
+        
+        try {
+            final XrplClient xrplClient = xrplConfig.getXrplClient();
+            final KeyPair issuerKeyPair = xrplConfig.getCentralWalletKeyPair(); // Main wallet as issuer
+            final BcSignatureService signatureService = new BcSignatureService();
+            final FeeResult feeResult = xrplClient.fee();
+            
+            // Get account info for sequence
+            final AccountInfoResult issuerAccountInfo = getAccountInfo(xrplClient, issuerKeyPair.publicKey().deriveAddress());
+            
+            log.info("Creating credential (simulated): Type: {}, Subject: {}", 
+                    credentialParams.credentialType(), 
+                    credentialParams.subjectAddress());
+            
+            // Create a Payment transaction with credential information in memo (simulation)
+            String credentialMemo = String.format("CREDENTIAL_CREATE|%s|%s|%s|%d", 
+                    credentialParams.credentialType(),
+                    credentialParams.subjectAddress(),
+                    credentialParams.uri(),
+                    credentialParams.expirationDays() != null ? credentialParams.expirationDays() : 365L);
+            
+            final Payment credentialPayment = Payment.builder()
+                    .account(issuerKeyPair.publicKey().deriveAddress())
+                    .destination(Address.of(credentialParams.subjectAddress()))
+                    .amount(XrpCurrencyAmount.ofDrops(1)) // Minimal amount (1 drop)
+                    .sequence(issuerAccountInfo.accountData().sequence())
+                    .fee(feeResult.drops().openLedgerFee())
+                    .signingPublicKey(issuerKeyPair.publicKey())
+                    .addMemos(MemoWrapper.builder()
+                            .memo(Memo.builder()
+                                    .memoData(credentialMemo)
+                                    .build())
+                            .build())
+                    .build();
+            
+            // Sign and submit transaction
+            final SingleSignedTransaction<Payment> signedPayment = signatureService.sign(
+                    issuerKeyPair.privateKey(), credentialPayment);
+            
+            final SubmitResult<Payment> result = xrplClient.submit(signedPayment);
+            
+            if ("tesSUCCESS".equals(result.engineResult())) {
+                String expirationDate = java.time.Instant.now()
+                        .plusSeconds((credentialParams.expirationDays() != null ? credentialParams.expirationDays() : 365L) * 24 * 60 * 60)
+                        .toString();
+                
+                log.info("Credential created successfully (simulated): Hash: {}, Type: {}, Subject: {}", 
+                        result.transactionResult().hash(),
+                        credentialParams.credentialType(),
+                        credentialParams.subjectAddress());
+                
+                return new CredentialCreateResponse(
+                        result.transactionResult().hash().value(),
+                        issuerKeyPair.publicKey().deriveAddress().value(),
+                        credentialParams.subjectAddress(),
+                        credentialParams.credentialType(),
+                        credentialParams.uri(),
+                        expirationDate,
+                        "Credential created successfully (simulated via Payment with memo)"
+                );
+            } else {
+                log.error("Credential creation failed: {} - {}", result.engineResult(), result.engineResultMessage());
+                throw new RuntimeException("Credential creation failed: " + result.engineResult());
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to create credential", e);
+            throw new RuntimeException("Failed to create credential", e);
+        }
+    }
+
+    @Override
+    public CredentialAcceptResponse acceptCredential(CredentialAcceptParams credentialAcceptParams) {
+        // NOTE: CredentialAccept transactions are not yet available in the current XRPL4J version
+        // This is a placeholder implementation that simulates credential acceptance using Payment transactions with memos
+        
+        try {
+            final XrplClient xrplClient = xrplConfig.getXrplClient();
+            final KeyPair subjectKeyPair = xrplConfig.getCentralWalletKeyPair(); // Main wallet as subject
+            final BcSignatureService signatureService = new BcSignatureService();
+            final FeeResult feeResult = xrplClient.fee();
+            
+            // Get account info for sequence
+            final AccountInfoResult subjectAccountInfo = getAccountInfo(xrplClient, subjectKeyPair.publicKey().deriveAddress());
+            
+            log.info("Accepting credential (simulated): Type: {}, Issuer: {}", 
+                    credentialAcceptParams.credentialType(), 
+                    credentialAcceptParams.issuerAddress());
+            
+            // Create a Payment transaction with credential acceptance information in memo (simulation)
+            String acceptanceMemo = String.format("CREDENTIAL_ACCEPT|%s|%s", 
+                    credentialAcceptParams.credentialType(),
+                    credentialAcceptParams.issuerAddress());
+            
+            final Payment acceptancePayment = Payment.builder()
+                    .account(subjectKeyPair.publicKey().deriveAddress())
+                    .destination(Address.of(credentialAcceptParams.issuerAddress()))
+                    .amount(XrpCurrencyAmount.ofDrops(1)) // Minimal amount (1 drop)
+                    .sequence(subjectAccountInfo.accountData().sequence())
+                    .fee(feeResult.drops().openLedgerFee())
+                    .signingPublicKey(subjectKeyPair.publicKey())
+                    .addMemos(MemoWrapper.builder()
+                            .memo(Memo.builder()
+                                    .memoData(acceptanceMemo)
+                                    .build())
+                            .build())
+                    .build();
+            
+            // Sign and submit transaction
+            final SingleSignedTransaction<Payment> signedPayment = signatureService.sign(
+                    subjectKeyPair.privateKey(), acceptancePayment);
+            
+            final SubmitResult<Payment> result = xrplClient.submit(signedPayment);
+            
+            if ("tesSUCCESS".equals(result.engineResult())) {
+                log.info("Credential accepted successfully (simulated): Hash: {}, Type: {}, Issuer: {}", 
+                        result.transactionResult().hash(),
+                        credentialAcceptParams.credentialType(),
+                        credentialAcceptParams.issuerAddress());
+                
+                return new CredentialAcceptResponse(
+                        result.transactionResult().hash().value(),
+                        subjectKeyPair.publicKey().deriveAddress().value(),
+                        credentialAcceptParams.issuerAddress(),
+                        credentialAcceptParams.credentialType(),
+                        "Credential accepted successfully (simulated via Payment with memo)"
+                );
+            } else {
+                log.error("Credential acceptance failed: {} - {}", result.engineResult(), result.engineResultMessage());
+                throw new RuntimeException("Credential acceptance failed: " + result.engineResult());
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to accept credential", e);
+            throw new RuntimeException("Failed to accept credential", e);
         }
     }
 
