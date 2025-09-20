@@ -5,17 +5,24 @@ import com.example.xrpl.xrpl.config.XUMMConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 import jakarta.xml.bind.DatatypeConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.HttpUrl;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.client.XrplClient;
+import org.xrpl.xrpl4j.client.faucet.FaucetClient;
+import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
+import org.xrpl.xrpl4j.codec.addresses.AddressBase58;
+import org.xrpl.xrpl4j.codec.addresses.Version;
 import org.xrpl.xrpl4j.crypto.keys.KeyPair;
+import org.xrpl.xrpl4j.crypto.keys.Seed;
 import org.xrpl.xrpl4j.crypto.signing.SingleSignedTransaction;
 import org.xrpl.xrpl4j.crypto.signing.bc.BcSignatureService;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
@@ -27,10 +34,8 @@ import org.xrpl.xrpl4j.model.client.fees.FeeUtils;
 import org.xrpl.xrpl4j.model.client.ledger.LedgerRequestParams;
 import org.xrpl.xrpl4j.model.client.ledger.LedgerResult;
 import org.xrpl.xrpl4j.model.client.transactions.SubmitResult;
-import org.xrpl.xrpl4j.model.transactions.Address;
-import org.xrpl.xrpl4j.model.transactions.EscrowFinish;
-import org.xrpl.xrpl4j.model.transactions.NfTokenMint;
-import org.xrpl.xrpl4j.model.transactions.NfTokenUri;
+import org.xrpl.xrpl4j.model.flags.NfTokenCreateOfferFlags;
+import org.xrpl.xrpl4j.model.transactions.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -54,6 +59,22 @@ public class XRPLServiceImpl implements XRPLService {
     private static final long RIPPLE_OFFSET = 946684800; // Ripple 시간 오프셋 (UNIX -> Ripple 변환에 사용)
     private static final long MAX_RIPPLE_TIME = 0xFFFFFFFFL; // Ripple 시간이 담기는 필드는 32비트 부호 없는 정수
     private static final UnsignedInteger ESCROW_D_TAG = UnsignedInteger.ONE;
+
+    public CreateWalletResponse createWallet() {
+        final HttpUrl devnetUrl = HttpUrl.parse(xrplConfig.getRpcUrl());
+        final HttpUrl faucetUrl = HttpUrl.parse("https://faucet.devnet.rippletest.net");
+        assert devnetUrl != null;
+        final FaucetClient faucetClient = FaucetClient.construct(faucetUrl);
+        final Seed seed = Seed.ed25519Seed();
+        final KeyPair randomKeyPair = seed.deriveKeyPair();
+
+        faucetClient.fundAccount(FundAccountRequest.of(randomKeyPair.publicKey().deriveAddress()));
+
+        return new CreateWalletResponse(
+                randomKeyPair.publicKey().deriveAddress().value(),
+                seed.decodedSeed().bytes().toString() // TODO : to string
+        );
+    }
 
     @Override
     public EscrowCreateResponse createEscrowWithXumm(String source, BigDecimal amount, String memo, Long finishAfter, Long cancelAfter, String condition) {
@@ -173,6 +194,37 @@ public class XRPLServiceImpl implements XRPLService {
             final BcSignatureService signatureService = new BcSignatureService();
             final SingleSignedTransaction<NfTokenMint> transaction = signatureService.sign(mainWalletKeyPair.privateKey(), nfTokenMint);
             final SubmitResult<NfTokenMint> result = xrplClient.submit(transaction);
+//
+//            final NfTokenCreateOffer offer = NfTokenCreateOffer.builder()
+//                    .account(mainWalletKeyPair.publicKey().deriveAddress())
+//                    .nftokenId(nftokenId)
+//                    .amount(XrpCurrencyAmount.ofDrops(0)) // 0이면 무료 전송
+//                    .destination(Address.of(destinationAddress))
+//                    .signingPublicKey(mainWalletKeyPair.publicKey())
+//                    .sequence(mainAccountInfo.accountData().sequence())
+//                    .fee(FeeUtils.computeNetworkFees(feeResult).recommendedFee())
+//                    .build();
+//
+//            // send NFT
+//            final NfTokenCreateOffer nfTokenCreateOffer = NfTokenCreateOffer.builder()
+//                    .account(keyPair.publicKey().deriveAddress())
+//                    .nfTokenId(tokenId)
+//                    .fee(FeeUtils.computeNetworkFees(xrplClient.fee()).recommendedFee())
+//                    .sequence(accountInfoResult.accountData().sequence().plus(UnsignedInteger.ONE))
+//                    .amount(XrpCurrencyAmount.ofDrops(1000))
+//                    .flags(NfTokenCreateOfferFlags.builder()
+//                            .tfSellToken(true)
+//                            .build())
+//                    .signingPublicKey(keyPair.publicKey())
+//                    .build();
+//
+//            SingleSignedTransaction<NfTokenCreateOffer> signedOffer = signatureService.sign(
+//                    keyPair.privateKey(),
+//                    nfTokenCreateOffer
+//            );
+//            SubmitResult<NfTokenCreateOffer> nfTokenCreateOfferSubmitResult = xrplClient.submit(signedOffer);
+//            assertThat(nfTokenCreateOfferSubmitResult.engineResult()).isEqualTo(TransactionResultCodes.TES_SUCCESS);
+//            assertThat(signedOffer.hash()).isEqualTo(nfTokenCreateOfferSubmitResult.transactionResult().hash());
 
             if (result.engineResult().equals("tesSUCCESS")) {
                 log.info("Issue NFT finish result, HASH: {} {}", result.engineResult(), result.transactionResult().hash());
@@ -251,6 +303,9 @@ public class XRPLServiceImpl implements XRPLService {
 //                    () -> this.getValidatedAccountInfo(sourceKeyPair.publicKey().deriveAddress())
 //            );
 //            XrpCurrencyAmount amount = XrpCurrencyAmount.ofDrops(12345);
+//
+//            Transaction transaction = Transaction
+//
 //            Payment payment = Payment.builder()
 //                    .account(sourceKeyPair.publicKey().deriveAddress())
 //                    .fee(FeeUtils.computeNetworkFees(feeResult).recommendedFee())
