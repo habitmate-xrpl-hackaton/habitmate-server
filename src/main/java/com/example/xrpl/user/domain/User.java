@@ -1,9 +1,13 @@
 package com.example.xrpl.user.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import static jakarta.persistence.CascadeType.PERSIST;
+import static jakarta.persistence.CascadeType.REMOVE;
 
 @Getter
 @Entity
@@ -25,6 +29,15 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @ManyToMany(cascade = {PERSIST, REMOVE})
+    @JoinTable(name = "follow",
+            joinColumns = @JoinColumn(name = "follower_id"),
+            inverseJoinColumns = @JoinColumn(name = "following_id"))
+    private final Set<User> following = new HashSet<>();
+
+    @ManyToMany(mappedBy = "following", cascade = {PERSIST, REMOVE})
+    private final Set<User> followers = new HashSet<>();
+
     private User(String email, String providerKey, Role role) {
         this.email = email;
         this.providerKey = providerKey;
@@ -41,5 +54,29 @@ public class User {
      */
     public static User createNewUser(String email, String providerKey) {
         return new User(email, providerKey, Role.USER);
+    }
+
+    /**
+     * 사용자를 팔로우하거나 언팔로우합니다.
+     * 이미 팔로우 중이면 언팔로우하고, 그렇지 않으면 팔로우합니다.
+     *
+     * @param userToFollow 팔로우/언팔로우할 사용자
+     */
+    public void toggleFollow(User userToFollow) {
+        if (this.following.contains(userToFollow)) {
+            unfollow(userToFollow);
+        } else {
+            follow(userToFollow);
+        }
+    }
+
+    private void follow(User user) {
+        this.following.add(user);
+        user.getFollowers().add(this);
+    }
+
+    private void unfollow(User user) {
+        this.following.remove(user);
+        user.getFollowers().remove(this);
     }
 }
