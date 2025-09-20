@@ -29,13 +29,3 @@ xrpl:
   nft-issuer-address: ${XRPL_NFT_ISSUER_ADDRESS:rKWHLdanG4awzUwQPKdVJarapERRZhVeyV}
   nft-issuer-secret: ${XRPL_NFT_ISSUER_SECRET:sEdVSA2F82BbpuizqWRAAqrmRRxDrVm}
   nft-uri-prefix: https://example.com/metadata/
-
-xumm:
-  main-address: ${XRPL_MAIN_ADDRESS}
-  api-key: ${XUMM_API_KEY}
-  api-secret: ${XUMM_API_SECRET}
-  base-url: ${XUMM_BASE_URL:https://xumm.app/api/v1/platform}
-  webhook-url: ${XUMM_WEBHOOK_URL:}
-  return-url: ${XUMM_RETURN_URL:}
-  expiration-minutes: ${XUMM_EXPIRATION_MINUTES:5}
-  xrpl-rpc-url: ${XRPL_RPC_URL:https://s.devnet.rippletest.net:51234}
