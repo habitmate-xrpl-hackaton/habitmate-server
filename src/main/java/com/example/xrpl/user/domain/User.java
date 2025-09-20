@@ -40,6 +40,9 @@ public class User extends AbstractAggregateRoot<User> {
     @Column
     private Boolean isKYC;
 
+    @Column
+    private String issuerAddress;
+
     @ManyToMany(cascade = {PERSIST, REMOVE})
     @JoinTable(name = "follow",
             joinColumns = @JoinColumn(name = "follower_id"),
@@ -84,5 +87,9 @@ public class User extends AbstractAggregateRoot<User> {
     
     public void updateKYC() {
         this.isKYC = true;
+    }
+
+    public void updateIssuerAddress(String issuerAddress) {
+        this.issuerAddress = issuerAddress;
     }
 }

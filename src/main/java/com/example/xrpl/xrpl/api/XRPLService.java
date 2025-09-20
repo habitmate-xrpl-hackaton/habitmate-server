@@ -1,4 +1,4 @@
-package com.example.xrpl.xrpl.application;
+package com.example.xrpl.xrpl.api;
 
 import org.xrpl.xrpl4j.client.XrplClient;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;

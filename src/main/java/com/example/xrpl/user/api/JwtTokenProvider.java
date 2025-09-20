@@ -3,14 +3,12 @@ package com.example.xrpl.user.api;
 import com.example.xrpl.user.domain.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.time.Instant;
 import java.util.Date;
 @Component
@@ -32,17 +30,17 @@ public class JwtTokenProvider {
         key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(String providerKey, Long userId, Role role, String xrplAddress, String xrplSecret, Boolean isKYC) {
+    public String createAccessToken(String providerKey, Long userId, Role role, String xrplAddress, String xrplSecret, Boolean isKYC, String issuerAddress) {
         Date expiryDate = Date.from(Instant.now().plusMillis(accessTokenExpireTime));
-        return createToken(providerKey, userId, role, expiryDate, xrplAddress, xrplSecret, isKYC);
+        return createToken(providerKey, userId, role, expiryDate, xrplAddress, xrplSecret, isKYC, issuerAddress);
     }
 
     public String createRefreshToken(String providerKey) {
         Date expiryDate = Date.from(Instant.now().plusMillis(refreshTokenExpireTime));
-        return createToken(providerKey, null, null, expiryDate, null,null, null);
+        return createToken(providerKey, null, null, expiryDate, null,null, null, null);
     }
 
-    private String createToken(String providerKey, Long userId, Role role, Date expiryDate, String xrplAddress, String xrplSecret, Boolean isKYC) {
+    private String createToken(String providerKey, Long userId, Role role, Date expiryDate, String xrplAddress, String xrplSecret, Boolean isKYC, String issuerAddress) {
         JwtBuilder builder = Jwts.builder()
                 .subject(providerKey)
                 .issuedAt(new Date())
@@ -63,6 +61,9 @@ public class JwtTokenProvider {
         }
         if (isKYC != null) {
             builder.claim("isKYC", isKYC);
+        }
+        if (issuerAddress != null) {
+            builder.claim("issuerAddress", issuerAddress);
         }
 
         return builder.compact();

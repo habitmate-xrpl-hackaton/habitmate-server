@@ -3,7 +3,7 @@ package com.example.xrpl.user.api;
 import com.example.xrpl.user.domain.User;
 import com.example.xrpl.user.infrastructure.UserRepository;
 import com.example.xrpl.xrpl.api.XRPLTestWalletService;
-import com.example.xrpl.xrpl.application.XRPLService;
+import com.example.xrpl.xrpl.api.XRPLService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -22,6 +22,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private final UserRepository userRepository;
     private final XRPLTestWalletService xRPLTestWalletService;
+    private final XRPLService xrplService;
 
     @Override
     @Transactional
@@ -45,18 +46,30 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 user.getId(),
                 user.getXrplAddress(),
                 user.getXrplSecret(),
-                user.getIsKYC()
+                user.getIsKYC(),
+                user.getIssuerAddress()
         );
     }
 
     private User findOrCreateUser(OAuthAttributes attributes) {
-        User user = userRepository.findByEmail(attributes.getEmail())
+        return userRepository.findByEmail(attributes.getEmail())
                 .orElseGet(() -> {
                     XRPLTestWalletService.CreateWalletResponse walletResponse = xRPLTestWalletService.createWallet();
                     User newUser = attributes.toEntity(attributes.getEmail(), walletResponse.address(), walletResponse.secret());
-                    return userRepository.save(newUser);
-                });
+                    User savedUser = userRepository.save(newUser);
 
-        return userRepository.save(user);
+                    XRPLService.CredentialCreateParams params = new XRPLService.CredentialCreateParams(
+                            savedUser.getXrplAddress(),
+                            "KYC",
+                            "",
+                            365L
+                    );
+
+                    XRPLService.CredentialCreateResponse credentialResponse = xrplService.createCredential(params);
+
+                    savedUser.updateIssuerAddress(credentialResponse.issuerAddress());
+
+                    return userRepository.save(savedUser);
+                });
     }
 }

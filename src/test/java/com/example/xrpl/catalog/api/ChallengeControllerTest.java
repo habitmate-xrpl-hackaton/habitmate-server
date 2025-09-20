@@ -1,6 +1,6 @@
 package com.example.xrpl.catalog.api;
 
-import com.example.xrpl.xrpl.application.XRPLService;
+import com.example.xrpl.xrpl.api.XRPLService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

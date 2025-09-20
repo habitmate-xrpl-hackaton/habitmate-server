@@ -1,6 +1,5 @@
 package com.example.xrpl.xrpl.api;
 
-import com.example.xrpl.xrpl.application.XRPLService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

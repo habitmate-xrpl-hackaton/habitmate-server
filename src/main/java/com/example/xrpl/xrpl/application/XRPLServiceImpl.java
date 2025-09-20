@@ -1,5 +1,6 @@
 package com.example.xrpl.xrpl.application;
 
+import com.example.xrpl.xrpl.api.XRPLService;
 import com.example.xrpl.xrpl.api.XRPLTestWalletService;
 import com.example.xrpl.xrpl.config.XRPLConfig;
 import com.google.common.primitives.UnsignedInteger;
