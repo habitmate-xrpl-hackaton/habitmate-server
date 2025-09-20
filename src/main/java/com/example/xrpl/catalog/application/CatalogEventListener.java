@@ -1,18 +1,18 @@
 package com.example.xrpl.catalog.application;
 
-import com.example.xrpl.catalog.domain.event.ChallengeCreatedEvent;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.modulith.events.ApplicationModuleListener;
+import com.example.xrpl.participation.api.ChallengeParticipantCreatedEvent;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
-@Slf4j
 @Component
+@RequiredArgsConstructor
 public class CatalogEventListener {
 
-    @ApplicationModuleListener
-    public void handleChallengeCreatedEvent(ChallengeCreatedEvent event) {
-        log.info("Event: challenge_created,  Created At: {}", LocalDateTime.now());
+    private final CatalogCommandService catalogCommandService;
+
+    @EventListener
+    public void handleChallengeParticipantCreatedEvent(ChallengeParticipantCreatedEvent event) {
+        catalogCommandService.incrementParticipantCount(event.getChallengeId());
     }
 }

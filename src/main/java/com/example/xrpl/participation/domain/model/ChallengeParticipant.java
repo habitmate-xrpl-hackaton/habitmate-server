@@ -1,17 +1,19 @@
 package com.example.xrpl.participation.domain.model;
 
+import com.example.xrpl.participation.api.ChallengeParticipantCreatedEvent;
 import com.example.xrpl.participation.api.ProofAddedEvent;
 import com.example.xrpl.participation.api.ProofStatusUpdatedEvent;
 import com.example.xrpl.participation.domain.ParticipationStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "challenge_participants")
@@ -41,22 +43,13 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
     @Enumerated(EnumType.STRING)
     private ParticipationStatus status;
 
-    private ChallengeParticipant(long challengeId, Long userId) {
-        this.challengeId = challengeId;
-        this.userId = userId;
-        this.status = ParticipationStatus.PENDING_PAYMENT;
-    }
-
     private ChallengeParticipant(long challengeId, Long userId, String escrowOwner, String offerSequence) {
         this.challengeId = challengeId;
         this.userId = userId;
         this.escrowOwner = escrowOwner;
         this.offerSequence = offerSequence;
         this.status = ParticipationStatus.ACTIVE;
-    }
-
-    public static ChallengeParticipant of(long challengeId, Long userId) {
-        return new ChallengeParticipant(challengeId, userId);
+        registerEvent(new ChallengeParticipantCreatedEvent(this.challengeId));
     }
 
     public static ChallengeParticipant of(long challengeId, Long userId, String escrowOwner, String offerSequence) {

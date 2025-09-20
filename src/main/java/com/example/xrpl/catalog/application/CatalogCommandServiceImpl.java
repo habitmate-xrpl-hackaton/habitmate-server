@@ -22,4 +22,13 @@ class CatalogCommandServiceImpl implements CatalogCommandService {
         challenge.endChallenge();
         challengeRepository.save(challenge);
     }
+
+    @Override
+    @Transactional
+    public void incrementParticipantCount(long challengeId) {
+        Challenge challenge = challengeRepository.findById(challengeId)
+                .orElseThrow(() -> new EntityNotFoundException("Challenge not found: " + challengeId));
+        challenge.participate();
+        challengeRepository.save(challenge);
+    }
 }
