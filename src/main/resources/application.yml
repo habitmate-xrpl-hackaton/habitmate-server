@@ -12,6 +12,14 @@ spring:
   application:
     name: xrpl
 
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 600000
+      connection-timeout: 30000
+
   data:
     web:
       pageable:
@@ -44,7 +52,7 @@ xrpl:
 
 gemini:
   api:
-    key: ${GEMINI_KEY}
+    key: "AIzaSyBKJDQ9-pnYQf4y6l-bOQM6ZGhbEUHtRSk"
   model:
     name: "gemini-2.5-flash-lite"
 
