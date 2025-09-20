@@ -1,7 +1,9 @@
 package com.example.xrpl.user.domain;
 
+import com.example.xrpl.user.api.UserCreatedEvent;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +15,7 @@ import static jakarta.persistence.CascadeType.REMOVE;
 @Entity
 @Table(name = "users")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class User extends AbstractAggregateRoot<User> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,7 +55,9 @@ public class User {
      * @return 새로 생성된 User 객체
      */
     public static User createNewUser(String email, String providerKey) {
-        return new User(email, providerKey, Role.USER);
+        User user = new User(email, providerKey, Role.USER);
+        user.registerEvent(new UserCreatedEvent(user.getId()));
+        return user;
     }
 
     /**
