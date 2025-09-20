@@ -243,6 +243,9 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
                     credentialParams.uri(),
                     credentialParams.expirationDays() != null ? credentialParams.expirationDays() : 365L);
             
+            // Convert memo to hex encoding (required by XRPL)
+            String hexEncodedMemo = hexEncode(credentialMemo);
+            
             final Payment credentialPayment = Payment.builder()
                     .account(issuerKeyPair.publicKey().deriveAddress())
                     .destination(Address.of(credentialParams.subjectAddress()))
@@ -252,7 +255,7 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
                     .signingPublicKey(issuerKeyPair.publicKey())
                     .addMemos(MemoWrapper.builder()
                             .memo(Memo.builder()
-                                    .memoData(credentialMemo)
+                                    .memoData(hexEncodedMemo)
                                     .build())
                             .build())
                     .build();
@@ -316,6 +319,9 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
                     credentialAcceptParams.credentialType(),
                     credentialAcceptParams.issuerAddress());
             
+            // Convert memo to hex encoding (required by XRPL)
+            String hexEncodedAcceptanceMemo = hexEncode(acceptanceMemo);
+            
             final Payment acceptancePayment = Payment.builder()
                     .account(subjectKeyPair.publicKey().deriveAddress())
                     .destination(Address.of(credentialAcceptParams.issuerAddress()))
@@ -325,7 +331,7 @@ public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
                     .signingPublicKey(subjectKeyPair.publicKey())
                     .addMemos(MemoWrapper.builder()
                             .memo(Memo.builder()
-                                    .memoData(acceptanceMemo)
+                                    .memoData(hexEncodedAcceptanceMemo)
                                     .build())
                             .build())
                     .build();
