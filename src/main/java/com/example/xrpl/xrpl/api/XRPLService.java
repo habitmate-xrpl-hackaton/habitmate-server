@@ -9,9 +9,6 @@ import java.util.List;
 
 public interface XRPLService {
 
-    String mintNFT(String dest, String uri);
-
-    List<String> nftUris(String source);
     /**
      * Completes multiple escrow transactions at once (batch processing)
      * 
