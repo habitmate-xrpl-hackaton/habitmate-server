@@ -14,6 +14,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,16 +28,20 @@ public class MyParticipationController {
     private final MyParticipationQueryService participationQueryService;
     private final MyParticipationCommandService participationCommandService;
 
-    @Operation(summary = "내 참여 챌린지 목록 조회", description = "현재 내가 참여하고 있는 챌린지 목록과 진행률을 조회합니다.")
+    @Operation(summary = "내 참여 챌린지 목록 조회", description = "현재 내가 참여하고 있는 챌린지 목록과 진행률을 조회합니다. KYC 인증이 필요합니다.")
     @GetMapping("/my-participations")
     public ResponseEntity<Page<MyParticipationListDto>> findMyParticipations(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomOAuth2User user,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        if (Boolean.FALSE.equals(user.getIsKYC())) {
+            throw new AccessDeniedException("KYC 인증이 필요합니다.");
+        }
         Page<MyParticipationListDto> response = participationQueryService.findMyParticipations(user.getUserId(), pageable);
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "챌린지 인증", description = "참여 중인 챌린지에 대한 인증을 업로드합니다.")
+    @PreAuthorize("principal.isKYC")
+    @Operation(summary = "챌린지 인증", description = "참여 중인 챌린지에 대한 인증을 업로드합니다. KYC 인증이 필요합니다.")
     @PostMapping(value = "/challenges/{challengeId}/participations/me/proofs")
     public ResponseEntity<Void> addProof(
             @Parameter(description = "챌린지 ID") @PathVariable long challengeId,
