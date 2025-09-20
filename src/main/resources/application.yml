@@ -20,6 +20,18 @@ spring:
         page-parameter: page
         size-parameter: size
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 785842157414-ur8enblqoqsnnp1rrs2f8bqqea27bhhh.apps.googleusercontent.com
+            client-secret: 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
+            redirect-uri: http://localhost:8080/login/oauth2/code/google
+            scope:
+              - profile
+              - email
+
 xrpl:
   network-id: testnet
   rpc-url: https://s.devnet.rippletest.net:51234
@@ -29,3 +41,14 @@ xrpl:
   nft-issuer-address: ${XRPL_NFT_ISSUER_ADDRESS:rKWHLdanG4awzUwQPKdVJarapERRZhVeyV}
   nft-issuer-secret: ${XRPL_NFT_ISSUER_SECRET:sEdVSA2F82BbpuizqWRAAqrmRRxDrVm}
   nft-uri-prefix: https://example.com/metadata/
+
+gemini:
+  api:
+    key: ${GEMINI_KEY}
+  model:
+    name: "gemini-2.5-flash-lite"
+
+jwt:
+  secret-key: "Zp7s5v8y/B?E(H+MbQeThWmZq4t6w9z$C&F)J@NcRfUjXn2r5u8x!A%D*G-KaPdS"
+  access-token-expire-time: 3600000 # 1시간 (밀리초 단위)
+  refresh-token-expire-time: 604800000 # 7일 (밀리초 단위)
