@@ -1,6 +1,7 @@
 package com.example.xrpl.catalog.api;
 
 import com.example.xrpl.catalog.domain.model.Challenge;
+import com.example.xrpl.catalog.domain.model.VerificationRule;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
@@ -27,7 +28,10 @@ public record ChallengeDetailDto(
         @JsonProperty("service_fee")
         FeeDto serviceFee,
         @JsonProperty("challenge_rules")
-        List<String> rules
+        List<String> rules,
+        @JsonProperty("frequency")
+        int frequency
+
 ) {
     public static ChallengeDetailDto from(Challenge challenge) {
         List<String> tags = new ArrayList<>();
@@ -45,7 +49,8 @@ public record ChallengeDetailDto(
                 challenge.getCurrentParticipantsCount(),
                 FeeDto.fromEntryFee(challenge),
                 FeeDto.fromServiceFee(challenge),
-                challenge.getRules()
+                challenge.getRules(),
+                challenge.getVerificationRule().frequency().getTimes()
         );
     }
 }

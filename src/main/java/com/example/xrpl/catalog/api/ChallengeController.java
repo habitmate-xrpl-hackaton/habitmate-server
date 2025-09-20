@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class ChallengeController {
 
     private final CatalogQueryService catalogQueryService;
+    private final CatalogCommandService catalogCommandService;
 
     @Operation(summary = "챌린지 생성", description = "새로운 챌린지를 생성합니다.")
     @PostMapping("/challenges")
@@ -43,5 +44,12 @@ public class ChallengeController {
     public ResponseEntity<ChallengeDetailDto> findChallengeDetail(@Parameter(description = "조회할 챌린지의 ID") @PathVariable Long id) {
         ChallengeDetailDto response = catalogQueryService.findChallengeDetail(id);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "(시연용) 챌린지 종료하기")
+    @PostMapping("/{challengeId}/end")
+    public ResponseEntity<Void> endChallenge(@PathVariable Long challengeId) {
+        catalogCommandService.endChallenge(challengeId);
+        return ResponseEntity.ok().build();
     }
 }

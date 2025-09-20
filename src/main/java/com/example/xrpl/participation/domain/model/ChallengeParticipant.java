@@ -49,9 +49,10 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
      * 챌린지 참가자의 인증(Proof)을 추가합니다.
      * 이 메서드는 애그리게이트의 상태를 변경하는 유일한 진입점 역할을 합니다.
      * 내부적으로 Proof를 생성하고, 양방향 연관관계를 설정하며, 도메인 이벤트를 발행합니다.
-     * @param imageUrl 인증 이미지 URL
+     *
+     * @param imageUrl    인증 이미지 URL
      * @param description 인증 설명
-     * @param hashtags 해시태그 엔티티 Set
+     * @param hashtags    해시태그 엔티티 Set
      */
     public void addProof(String imageUrl, String description, Set<Hashtag> hashtags) {
         Proof proof = Proof.of(this, LocalDateTime.now(), false, imageUrl, description, hashtags);
@@ -67,5 +68,17 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
 
         proofToVerify.verify(isSuccess);
         registerEvent(new ProofStatusUpdatedEvent(proofId, this.userId, isSuccess));
+    }
+
+
+    /**
+     * 성공적으로 완료된 인증(Proof)의 개수를 반환합니다.
+     *
+     * @return 'PASSED' 상태인 인증의 총 개수
+     */
+    public int getPassedProofCount() {
+        return (int) this.proofs.stream()
+                .filter(Proof::isPassed)
+                .count();
     }
 }

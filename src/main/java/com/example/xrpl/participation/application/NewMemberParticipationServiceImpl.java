@@ -1,6 +1,5 @@
 package com.example.xrpl.participation.application;
 
-import com.example.xrpl.catalog.api.ChallengeCommandService;
 import com.example.xrpl.participation.domain.model.ChallengeParticipant;
 import com.example.xrpl.participation.infrastructure.ChallengeParticipantRepository;
 import lombok.RequiredArgsConstructor;

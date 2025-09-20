@@ -59,4 +59,8 @@ public class Proof {
     void verify(boolean isSuccess) {
         this.success = isSuccess;
     }
+
+    Boolean isPassed() {
+        return this.success;
+    }
 }

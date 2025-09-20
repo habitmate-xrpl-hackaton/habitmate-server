@@ -2,7 +2,7 @@ package com.example.xrpl.catalog.api;
 
 import java.util.List;
 
-public interface ChallengeQueryService {
-    List<ChallengeCatalogInfoDto> findChallengesByIds(List<Long> challengeIds);
+public interface CatalogQueryService {
+    List<ChallengeDetailDto> findChallengesByIds(List<Long> challengeIds);
     ChallengeDetailDto findChallengeById(Long challengeId);
 }

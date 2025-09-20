@@ -1,6 +1,5 @@
 package com.example.xrpl.participation.application;
 
-import com.example.xrpl.catalog.api.ChallengeCommandService;
 import com.example.xrpl.participation.api.ProofCreateRequest;
 import com.example.xrpl.participation.domain.model.ChallengeParticipant;
 import com.example.xrpl.participation.domain.model.Hashtag;
