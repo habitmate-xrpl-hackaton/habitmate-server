@@ -11,24 +11,29 @@ import java.util.List;
 
 public interface XRPLService {
 
+    CreateWalletResponse createWallet();
+
     String mintNFT(String dest, String uri);
+
     List<String> nftUris(String source);
-    
+
     /**
      * Creates an escrow transaction using XUMM API and returns QR + hash info
-     * @param source The source address for the escrow
-     * @param amount The amount to escrow in XRP
-     * @param memo Optional memo for the transaction
+     *
+     * @param source      The source address for the escrow
+     * @param amount      The amount to escrow in XRP
+     * @param memo        Optional memo for the transaction
      * @param finishAfter Optional finish after timestamp
      * @param cancelAfter Optional cancel after timestamp
-     * @param condition Optional condition for the escrow
+     * @param condition   Optional condition for the escrow
      * @return Escrow creation response with QR and payload info
      */
     EscrowCreateResponse createEscrowWithXumm(String source, BigDecimal amount, String memo, Long finishAfter, Long cancelAfter, String condition);
-    
+
     /**
      * Completes an escrow transaction using XUMM
-     * @param escrowOwner The owner of the escrow
+     *
+     * @param escrowOwner   The owner of the escrow
      * @param offerSequence The sequence number of the escrow offer
      * @return XUMM payload UUID that can be used to track the transaction
      */
@@ -38,45 +43,56 @@ public interface XRPLService {
 
     /**
      * Gets the status of a XUMM payload
+     *
      * @param payloadUuid The UUID of the XUMM payload
      * @return Status information about the payload
      */
     PayloadStatus getPayloadStatus(String payloadUuid);
-    
+
     /**
      * Gets account information from XRPL
+     *
      * @param address The XRPL address to get information for
      * @return Account information including balance, sequence, etc.
      */
     AccountInfoResult getAccountInfo(XrplClient xrplClient, Address address);
-    
+
     /**
      * Represents the status of a XUMM payload
      */
     record PayloadStatus(
-        String uuid,
-        String status, // WAITING, OPENED, SIGNED, CANCELLED, EXPIRED
-        String transactionHash,
-        String signerAddress,
-        boolean signed
-    ) {}
+            String uuid,
+            String status, // WAITING, OPENED, SIGNED, CANCELLED, EXPIRED
+            String transactionHash,
+            String signerAddress,
+            boolean signed
+    ) {
+    }
 
     record PaymentParams(
-        String destinationAddress,
-        Long destinationTag,
-        BigDecimal amount,
-        String memo
-    ) {}
+            String destinationAddress,
+            Long destinationTag,
+            BigDecimal amount,
+            String memo
+    ) {
+    }
 
     /**
      * Response for escrow creation with XUMM
      */
     record EscrowCreateResponse(
-        String payloadUuid,
-        String qrPngUrl,
-        String signUrl,
-        String webhookUrl,
-        String returnUrl,
-        String message
-    ) {}
+            String payloadUuid,
+            String qrPngUrl,
+            String signUrl,
+            String webhookUrl,
+            String returnUrl,
+            String message
+    ) {
+    }
+
+    record CreateWalletResponse(
+            String address,
+            String secret
+    ) {
+    }
 }
