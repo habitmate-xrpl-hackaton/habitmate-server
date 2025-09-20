@@ -36,7 +36,7 @@ public class OAuthAttributes {
         return (String) attributes.get(nameAttributeKey);
     }
 
-    public User toEntity() {
-        return User.createNewUser(email, getProviderKey());
+    public User toEntity(String email, String walletAddress, String walletSecret) {
+        return User.createNewUser(email, getProviderKey(), walletAddress, walletSecret);
     }
 }

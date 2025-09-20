@@ -1,5 +1,6 @@
 package com.example.xrpl.xrpl.application;
 
+import com.example.xrpl.xrpl.api.XRPLTestWalletService;
 import com.example.xrpl.xrpl.config.XRPLConfig;
 import com.example.xrpl.xrpl.config.XUMMConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,7 +49,7 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class XRPLServiceImpl implements XRPLService {
+public class XRPLServiceImpl implements XRPLService, XRPLTestWalletService {
 
     private final XRPLConfig xrplConfig;
     private final XUMMConfig xummConfig;

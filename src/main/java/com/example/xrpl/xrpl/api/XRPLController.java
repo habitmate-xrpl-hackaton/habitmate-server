@@ -17,6 +17,7 @@ import java.util.Map;
 public class XRPLController {
 
     private final XRPLService xrplService;
+    private final XRPLTestWalletService xrplTestWalletService;
 
     @PostMapping("/escrow/complete")
     public ResponseEntity<Map<String, String>> completeEscrow(
@@ -172,8 +173,8 @@ public class XRPLController {
         List<XRPLService.PaymentParams> payments
     ) {}
 
-    @PostMapping("/test-create-wallet")
-    public ResponseEntity<XRPLService.CreateWalletResponse> createTestWallet() {
-        return ResponseEntity.ok(xrplService.createWallet());
-    }
+//    @PostMapping("/test-create-wallet")
+//    public ResponseEntity<XRPLTestWalletService.CreateWalletResponse> createTestWallet() {
+//        return ResponseEntity.ok(xrplTestWalletService.createWallet());
+//    }
 }

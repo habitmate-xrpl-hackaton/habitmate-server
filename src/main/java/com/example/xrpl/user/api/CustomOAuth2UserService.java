@@ -2,6 +2,7 @@ package com.example.xrpl.user.api;
 
 import com.example.xrpl.user.domain.User;
 import com.example.xrpl.user.infrastructure.UserRepository;
+import com.example.xrpl.xrpl.api.XRPLTestWalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -19,6 +20,7 @@ import java.util.Collections;
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final UserRepository userRepository;
+    private final XRPLTestWalletService xRPLTestWalletService;
 
     @Override
     @Transactional
@@ -39,13 +41,19 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 attributes.getAttributes(),
                 attributes.getNameAttributeKey(),
                 user.getRole(),
-                user.getId()
+                user.getId(),
+                user.getXrplAddress(),
+                user.getXrplSecret()
         );
     }
 
     private User findOrCreateUser(OAuthAttributes attributes) {
         User user = userRepository.findByEmail(attributes.getEmail())
-                .orElseGet(attributes::toEntity);
+                .orElseGet(() -> {
+                    XRPLTestWalletService.CreateWalletResponse walletResponse = xRPLTestWalletService.createWallet();
+                    User newUser = attributes.toEntity(attributes.getEmail(), walletResponse.address(), walletResponse.secret());
+                    return userRepository.save(newUser);
+                });
 
         return userRepository.save(user);
     }
