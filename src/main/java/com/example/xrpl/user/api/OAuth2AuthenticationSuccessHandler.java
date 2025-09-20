@@ -40,7 +40,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         log.info("OAuth2 Login successful for user: {}, Issued Access Token", customOAuth2User.getName());
 
-        String targetUrl = UriComponentsBuilder.fromUriString("https://n.news.naver.com/article/092/0002391200?cds=news_media_pc")
+        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .build().toUriString();

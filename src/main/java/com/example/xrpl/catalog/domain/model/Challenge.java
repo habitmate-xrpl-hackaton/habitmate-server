@@ -24,6 +24,7 @@ public class Challenge extends AbstractAggregateRoot<Challenge> {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     private ChallengeStatus status;
 
     private String title;
