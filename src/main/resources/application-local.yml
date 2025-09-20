@@ -43,12 +43,3 @@ jwt:
   secret-key: "Zp7s5v8y/B?E(H+MbQeThWmZq4t6w9z$C&F)J@NcRfUjXn2r5u8x!A%D*G-KaPdS"
   access-token-expire-time: 3600000 # 1시간 (밀리초 단위)
   refresh-token-expire-time: 604800000 # 7일 (밀리초 단위)
-
-xumm:
-  main-address: ${XRPL_MAIN_ADDRESS:rMx4PUVb1ewxvfxXNFrGAVVdn61sbAoTLc}
-  api-key: ${XUMM_API_KEY:067b1baf-04a8-4d62-b62b-773072cbd090}
-  api-secret: ${XUMM_API_SECRET:1d9eca14-c6fd-4b4a-84f9-3df31aa6dd8c}
-  webhook-url: https://xrpl-4mf9.onrender.com/api/xrpl/webhook
-  return-url: https://xrpl-4mf9.onrender.com/api/xrpl/return
-  expiration-minutes: 10
-  xrpl-rpc-url: ${XRPL_RPC_URL:https://s.devnet.rippletest.net:51234}

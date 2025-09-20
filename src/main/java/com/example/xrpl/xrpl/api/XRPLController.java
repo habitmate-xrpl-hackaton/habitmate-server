@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -19,41 +18,43 @@ public class XRPLController {
     private final XRPLService xrplService;
     private final XRPLTestWalletService xrplTestWalletService;
 
-    @PostMapping("/escrow/complete")
-    public ResponseEntity<Map<String, String>> completeEscrow(
-            @RequestParam String escrowOwner,
-            @RequestParam Integer offerSequence) {
+    @PostMapping("/escrow/complete/batch")
+    public ResponseEntity<Map<String, String>> completeBatchEscrow(
+            @RequestBody BatchEscrowRequest request
+    ) {
         try {
-            String payloadUuid = xrplService.completeEscrow(escrowOwner, offerSequence);
+            xrplService.completeBatchEscrow(request.escrows());
             return ResponseEntity.ok(Map.of(
-                "payloadUuid", payloadUuid,
-                "message", "Escrow completion payload created successfully"
+                    "message", "Batch escrow completion submitted successfully.",
+                    "totalEscrows", String.valueOf(request.escrows().size()),
+                    "type", "batchEscrow"
             ));
         } catch (Exception e) {
-            log.error("Failed to complete escrow", e);
+            log.error("Failed to complete batch escrow", e);
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to complete escrow: " + e.getMessage()
+                    "error", "Failed to complete batch escrow: " + e.getMessage()
             ));
         }
     }
 
-//    @PostMapping("/payment/batch")
-//    public ResponseEntity<Map<String, String>> sendBatchPayment(
-//            @RequestBody BatchPaymentRequest request) {
-//        try {
-//            String payloadUuid = xrplService.sendBatchPayment(request.payments());
-//            return ResponseEntity.ok(Map.of(
-//                "payloadUuid", payloadUuid,
-//                "message", "Batch payment payload created successfully. Please sign using XUMM app.",
-//                "totalPayments", String.valueOf(request.payments().size())
-//            ));
-//        } catch (Exception e) {
-//            log.error("Failed to send batch payment", e);
-//            return ResponseEntity.badRequest().body(Map.of(
-//                "error", "Failed to send batch payment: " + e.getMessage()
-//            ));
-//        }
-//    }
+    @PostMapping("/payment/batch")
+    public ResponseEntity<Map<String, String>> sendBatchPayment(
+            @RequestBody BatchPaymentRequest request
+    ) {
+        try {
+            xrplService.sendBatchPayment(request.payments());
+            return ResponseEntity.ok(Map.of(
+                    "message", "Batch payment submitted successfully.",
+                    "totalPayments", String.valueOf(request.payments().size()),
+                    "type", "standardBatch"
+            ));
+        } catch (Exception e) {
+            log.error("Failed to send batch payment", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Failed to send batch payment: " + e.getMessage()
+            ));
+        }
+    }
 
     @PostMapping("/nft/mint")
     public ResponseEntity<Map<String, String>> mintNFT(
@@ -63,13 +64,13 @@ public class XRPLController {
         try {
             String payloadUuid = xrplService.mintNFT(recipientAddress, uri);
             return ResponseEntity.ok(Map.of(
-                "payloadUuid", payloadUuid,
-                "message", "NFT mint payload created successfully. Please sign using XUMM app."
+                    "payloadUuid", payloadUuid,
+                    "message", "NFT mint payload created successfully. Please sign using XUMM app."
             ));
         } catch (Exception e) {
             log.error("Failed to mint NFT", e);
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to mint NFT: " + e.getMessage()
+                    "error", "Failed to mint NFT: " + e.getMessage()
             ));
         }
     }
@@ -85,48 +86,6 @@ public class XRPLController {
         }
     }
 
-    @GetMapping("/payload/{uuid}/status")
-    public ResponseEntity<XRPLService.PayloadStatus> getPayloadStatus(@PathVariable String uuid) {
-        try {
-            XRPLService.PayloadStatus status = xrplService.getPayloadStatus(uuid);
-            return ResponseEntity.ok(status);
-        } catch (Exception e) {
-            log.error("Failed to get payload status", e);
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    @PostMapping("/webhook")
-    public ResponseEntity<Void> handleWebhook(@RequestBody Map<String, Object> payload) {
-        log.info("Received XUMM webhook: {}", payload);
-        
-        // Here you can implement webhook handling logic
-        // For example, update database when a transaction is signed
-        
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/return")
-    public ResponseEntity<String> handleReturn(@RequestParam(required = false) String uuid) {
-        log.info("User returned from XUMM with payload UUID: {}", uuid);
-        
-        if (uuid != null) {
-            try {
-                XRPLService.PayloadStatus status = xrplService.getPayloadStatus(uuid);
-                return ResponseEntity.ok(String.format(
-                    "Transaction %s. Status: %s", 
-                    status.signed() ? "completed successfully" : "is pending",
-                    status.status()
-                ));
-            } catch (Exception e) {
-                log.error("Failed to get payload status for return", e);
-                return ResponseEntity.ok("Unable to determine transaction status");
-            }
-        }
-        
-        return ResponseEntity.ok("Returned from XUMM");
-    }
-
     @PostMapping("/nft/issue")
     public ResponseEntity<Map<String, String>> issueNFT(
             @RequestParam(required = false) String dest,
@@ -135,34 +94,15 @@ public class XRPLController {
         try {
             String transactionHash = xrplService.mintNFT(dest, uri);
             return ResponseEntity.ok(Map.of(
-                "transactionHash", transactionHash,
-                "message", "NFT issued successfully to blockchain",
-                "uri", uri != null ? uri : "No URI provided"
+                    "transactionHash", transactionHash,
+                    "message", "NFT issued successfully to blockchain",
+                    "uri", uri != null ? uri : "No URI provided"
             ));
         } catch (Exception e) {
             log.error("Failed to issue NFT", e);
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Failed to issue NFT: " + e.getMessage()
+                    "error", "Failed to issue NFT: " + e.getMessage()
             ));
-        }
-    }
-
-    @PostMapping("/escrow/create-with-xumm")
-    public ResponseEntity<XRPLService.EscrowCreateResponse> createEscrowWithXumm(
-            @RequestParam String sourceAddress,
-            @RequestParam BigDecimal amount,
-            @RequestParam(required = false) String memo,
-            @RequestParam(required = false) Long finishAfter,
-            @RequestParam(required = false) Long cancelAfter,
-            @RequestParam(required = false) String condition) {
-        try {
-            XRPLService.EscrowCreateResponse response = xrplService.createEscrowWithXumm(
-                sourceAddress, amount, memo, finishAfter, cancelAfter, condition
-            );
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Failed to create escrow with XUMM", e);
-            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -170,8 +110,17 @@ public class XRPLController {
      * Request DTO for batch payment
      */
     public record BatchPaymentRequest(
-        List<XRPLService.PaymentParams> payments
-    ) {}
+            List<XRPLService.PaymentParams> payments
+    ) {
+    }
+
+    /**
+     * Request DTO for batch escrow completion
+     */
+    public record BatchEscrowRequest(
+            List<XRPLService.EscrowParams> escrows
+    ) {
+    }
 
 //    @PostMapping("/test-create-wallet")
 //    public ResponseEntity<XRPLTestWalletService.CreateWalletResponse> createTestWallet() {
