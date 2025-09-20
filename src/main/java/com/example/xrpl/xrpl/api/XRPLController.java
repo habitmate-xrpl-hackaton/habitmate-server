@@ -171,4 +171,9 @@ public class XRPLController {
     public record BatchPaymentRequest(
         List<XRPLService.PaymentParams> payments
     ) {}
+
+    @PostMapping("/test-create-wallet")
+    public ResponseEntity<XRPLService.CreateWalletResponse> createTestWallet() {
+        return ResponseEntity.ok(xrplService.createWallet());
+    }
 }
