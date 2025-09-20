@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
@@ -41,11 +42,23 @@ dependencies {
 
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.12")
 
+	// XRPL4J dependencies
+	implementation (platform("org.xrpl:xrpl4j-bom:3.2.1"))
+	implementation ("org.xrpl:xrpl4j-core")
+	implementation ("org.xrpl:xrpl4j-client")
+
+	// XUMM SDK dependencies
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("com.fasterxml.jackson.core:jackson-databind")
+	implementation("org.apache.httpcomponents.client5:httpclient5")
+
+	// Test Dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.awaitility:awaitility:4.2.1")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	testRuntimeOnly("com.h2database:h2")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")

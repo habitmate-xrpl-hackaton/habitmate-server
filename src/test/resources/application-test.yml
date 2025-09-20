@@ -1,0 +1,17 @@
+xumm:
+  api-key: test
+  api-secret: test
+  base-url: https://xumm.app/api/v1/platform
+  webhook-url: http://localhost:8080/webhook
+  return-url: http://localhost:8080/return
+  expiration-minutes: 5
+  xrpl-rpc-url: https://s.devnet.rippletest.net:51234
+
+logging:
+  level:
+    com.example.xrpl: DEBUG
+    org.xrpl.xrpl4j: INFO
+
+spring:
+  main:
+    banner-mode: off
