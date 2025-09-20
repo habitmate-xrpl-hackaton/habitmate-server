@@ -17,7 +17,6 @@ import java.util.*;
 @Table(name = "challenge_participants")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EqualsAndHashCode(of = {"challengeId", "userId"})
 public class ChallengeParticipant extends AbstractAggregateRoot<ChallengeParticipant> {
 
     @Id

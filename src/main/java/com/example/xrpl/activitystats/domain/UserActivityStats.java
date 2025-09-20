@@ -35,6 +35,8 @@ public class UserActivityStats {
     @Column
     private LocalDate lastSuccessDate;
 
+    private int point;
+
     private UserActivityStats(Long userId) {
         this.userId = userId;
     }
