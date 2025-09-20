@@ -26,7 +26,7 @@ public class NewMemberParticipationController {
             @Parameter(description = "참가할 챌린지 ID") @PathVariable Long challengeId,
             @RequestBody NewMemberParticipationRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomOAuth2User user) {
-        newMemberParticipationService.participateInChallenge(challengeId, user.getUserId(), request.getEscrowOwner(), request.getOfferSequence());
+        newMemberParticipationService.participateInChallenge(challengeId, user.getUserId(), request.escrowOwner(), request.offerSequence());
         return ResponseEntity.ok().build();
     }
 }
