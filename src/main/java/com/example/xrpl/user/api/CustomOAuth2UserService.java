@@ -3,6 +3,7 @@ package com.example.xrpl.user.api;
 import com.example.xrpl.user.domain.User;
 import com.example.xrpl.user.infrastructure.UserRepository;
 import com.example.xrpl.xrpl.api.XRPLTestWalletService;
+import com.example.xrpl.xrpl.application.XRPLService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -43,7 +44,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 user.getRole(),
                 user.getId(),
                 user.getXrplAddress(),
-                user.getXrplSecret()
+                user.getXrplSecret(),
+                user.getIsKYC()
         );
     }
 

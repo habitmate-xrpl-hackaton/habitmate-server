@@ -37,6 +37,9 @@ public class User extends AbstractAggregateRoot<User> {
     @Column(nullable = false)
     private String xrplSecret;
 
+    @Column
+    private Boolean isKYC;
+
     @ManyToMany(cascade = {PERSIST, REMOVE})
     @JoinTable(name = "follow",
             joinColumns = @JoinColumn(name = "follower_id"),
@@ -46,34 +49,21 @@ public class User extends AbstractAggregateRoot<User> {
     @ManyToMany(mappedBy = "following", cascade = {PERSIST, REMOVE})
     private final Set<User> followers = new HashSet<>();
 
-    private User(String email, String providerKey, Role role, String walletAddress, String walletSecret) {
+    private User(String email, String providerKey, Role role, String xrplAddress, String xrplSecret, boolean isKYC) {
         this.email = email;
         this.providerKey = providerKey;
         this.role = role;
-        this.xrplAddress = walletAddress;
-        this.xrplSecret = walletSecret;
+        this.xrplAddress = xrplAddress;
+        this.xrplSecret = xrplSecret;
+        this.isKYC = isKYC;
     }
 
-    /**
-     * OAuth2 신규 사용자를 위한 User 애그리게이트를 생성합니다.
-     * 생성의 책임은 User 애그리게이트 자신에게 있습니다.
-     *
-     * @param email       사용자 이메일
-     * @param providerKey OAuth 제공자의 고유 키 (예: Google의 'sub')
-     * @return 새로 생성된 User 객체
-     */
-    public static User createNewUser(String email, String providerKey, String walletAddress, String walletSecret) {
-        User user = new User(email, providerKey, Role.USER, walletAddress, walletSecret);
+    public static User createNewUser(String email, String providerKey, String xrplAddress, String xrplSecret) {
+        User user = new User(email, providerKey, Role.USER, xrplAddress, xrplSecret, false);
         user.registerEvent(new UserCreatedEvent(user.getId()));
         return user;
     }
 
-    /**
-     * 사용자를 팔로우하거나 언팔로우합니다.
-     * 이미 팔로우 중이면 언팔로우하고, 그렇지 않으면 팔로우합니다.
-     *
-     * @param userToFollow 팔로우/언팔로우할 사용자
-     */
     public void toggleFollow(User userToFollow) {
         if (this.following.contains(userToFollow)) {
             unfollow(userToFollow);
@@ -90,5 +80,9 @@ public class User extends AbstractAggregateRoot<User> {
     private void unfollow(User user) {
         this.following.remove(user);
         user.getFollowers().remove(this);
+    }
+    
+    public void updateKYC() {
+        this.isKYC = true;
     }
 }

@@ -32,6 +32,6 @@ public class TokenRefreshService {
         User user = userRepository.findByProviderKey(providerKey)
                 .orElseThrow(() -> new AuthenticationException("User not found with providerKey: " + providerKey) {});
 
-        return jwtTokenProvider.createAccessToken(user.getProviderKey(), user.getId(), user.getRole(), user.getXrplAddress(), user.getXrplSecret());
+        return jwtTokenProvider.createAccessToken(user.getProviderKey(), user.getId(), user.getRole(), user.getXrplAddress(), user.getXrplSecret(), user.getIsKYC());
     }
 }

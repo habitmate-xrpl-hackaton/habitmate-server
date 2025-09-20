@@ -17,4 +17,5 @@ public @interface WithMockCustomUser {
 
     String xrplSecret() default "asdasd";
 
+    boolean isKYC() default true;
 }

@@ -8,4 +8,6 @@ public interface UserService {
      * @param targetUserId  팔로우/언팔로우 대상 사용자의 ID
      */
      void toggleFollow(Long currentUserId, Long targetUserId);
+
+    void updateKYC(Long userId);
 }

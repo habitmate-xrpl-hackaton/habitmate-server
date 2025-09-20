@@ -18,6 +18,7 @@ public class CustomOAuth2User extends DefaultOAuth2User {
     private final Long userId;
     private final String xrplAddress;
     private final String xrplSecret;
+    private final Boolean isKYC;
 
 
     /**
@@ -32,20 +33,22 @@ public class CustomOAuth2User extends DefaultOAuth2User {
      */
     public CustomOAuth2User(Collection<? extends GrantedAuthority> authorities,
                             Map<String, Object> attributes, String nameAttributeKey,
-                            Role role, Long userId, String address, String secret) {
+                            Role role, Long userId, String address, String secret, Boolean isKYC) {
         super(authorities, attributes, nameAttributeKey);
         this.role = role;
         this.userId = userId;
         this.xrplAddress = address;
         this.xrplSecret = secret;
+        this.isKYC = isKYC;
     }
 
-    public CustomOAuth2User(Long userId, String email, String role, String xrplAddress, String xrplSecret) {
+    public CustomOAuth2User(Long userId, String email, String role, String xrplAddress, String xrplSecret, Boolean isKYC) {
         super(List.of(new SimpleGrantedAuthority(role)), Map.of("email", email), "email");
         this.userId = userId;
         this.role = Role.valueOf(role.replace("ROLE_", ""));
         this.xrplAddress = xrplAddress;
         this.xrplSecret = xrplSecret;
+        this.isKYC = isKYC;
     }
 
     public static CustomOAuth2User fromClaims(Claims claims) {
@@ -54,7 +57,8 @@ public class CustomOAuth2User extends DefaultOAuth2User {
         String providerKey = claims.getSubject();
         String walletAddress = claims.get("xrplAddress", String.class);
         String walletSecret = claims.get("xrplSecret", String.class);
+        Boolean isKYC = claims.get("isKYC", Boolean.class);
 
-        return new CustomOAuth2User(userId, providerKey, "ROLE_" + role, walletAddress, walletSecret);
+        return new CustomOAuth2User(userId, providerKey, "ROLE_" + role, walletAddress, walletSecret, isKYC);
     }
 }
