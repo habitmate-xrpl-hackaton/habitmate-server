@@ -63,6 +63,6 @@ public class ChallengeParticipant extends AbstractAggregateRoot<ChallengePartici
                 .orElseThrow(() -> new IllegalArgumentException("Proof not found with id: " + proofId));
 
         proofToVerify.verify(isSuccess);
-        registerEvent(new ProofStatusUpdatedEvent(proofId, isSuccess));
+        registerEvent(new ProofStatusUpdatedEvent(proofId, this.userId, isSuccess));
     }
 }
