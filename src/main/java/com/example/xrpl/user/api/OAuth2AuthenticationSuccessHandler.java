@@ -40,7 +40,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         log.info("OAuth2 Login successful for user: {}, Issued Access Token", customOAuth2User.getName());
 
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000")
+        String targetUrl = UriComponentsBuilder.fromUriString("https://habitmate-client-mu.vercel.app/")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .build().toUriString();
